@@ -1,0 +1,1019 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dérive — racontez votre voyage, on trace la route</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;0,9..144,680;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink-deep:#0E1326;
+    --ink-mid:#171F3B;
+    --ink-line:#2A3560;
+    --parchment:#EDE3C8;
+    --brass:#C9A227;
+    --rust:#B5563C;
+    --fog:#93A0C4;
+    --ivory:#F4EFE1;
+    --ink-text:#221B10;
+    --radius:14px;
+    --serif:'Fraunces', serif;
+    --sans:'Inter', sans-serif;
+    --mono:'IBM Plex Mono', monospace;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{margin:0;background:var(--ink-deep);color:var(--ivory);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased;}
+  body.locked{overflow:hidden;}
+  a{color:inherit;}
+  ::selection{background:var(--brass);color:var(--ink-deep);}
+  :focus-visible{outline:2px solid var(--brass);outline-offset:3px;}
+  .wrap{max-width:1120px;margin:0 auto;padding:0 28px;}
+
+  nav{display:flex;align-items:center;justify-content:space-between;padding:26px 28px;max-width:1120px;margin:0 auto;flex-wrap:wrap;gap:12px;}
+  .logo{font-family:var(--serif);font-size:1.5rem;font-weight:680;letter-spacing:0.02em;display:flex;align-items:baseline;gap:8px;}
+  .logo .dot{color:var(--rust);font-size:1.1rem;}
+  .nav-links{display:flex;gap:28px;font-size:0.92rem;color:var(--fog);align-items:center;}
+  .nav-links a{text-decoration:none;transition:color .2s;}
+  .nav-links a:hover{color:var(--ivory);}
+  .nav-badge{font-family:var(--mono);font-size:0.72rem;background:var(--ink-mid);border:1px solid var(--ink-line);padding:4px 10px;border-radius:100px;color:var(--brass);}
+
+  .hero{position:relative;padding:56px 0 40px;overflow:hidden;}
+  .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center;}
+  .eyebrow{font-family:var(--mono);font-size:0.78rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--brass);margin-bottom:18px;display:flex;align-items:center;gap:10px;}
+  .eyebrow::before{content:'';width:22px;height:1px;background:var(--brass);display:inline-block;}
+  h1{font-family:var(--serif);font-weight:680;font-size:clamp(2.4rem, 5vw, 3.6rem);line-height:1.04;letter-spacing:-0.01em;margin:0 0 22px;}
+  h1 em{font-style:italic;font-weight:500;color:var(--parchment);}
+  .hero p.lede{color:var(--fog);font-size:1.08rem;max-width:46ch;margin:0 0 34px;}
+
+  .chart{position:relative;aspect-ratio:1/1;max-width:440px;margin-left:auto;}
+  .chart svg{width:100%;height:100%;}
+  .route{fill:none;stroke:var(--brass);stroke-width:1.4;stroke-dasharray:6 7;stroke-linecap:round;opacity:0.85;stroke-dashoffset:0;animation:sail 40s linear infinite;}
+  .route.done{stroke:var(--rust);opacity:1;}
+  @keyframes sail{to{stroke-dashoffset:-260;}}
+  .waypoint{fill:var(--parchment);}
+  .waypoint.active{fill:var(--rust);}
+  .compass{transform-origin:center;animation:spin 90s linear infinite;}
+  @media (prefers-reduced-motion: reduce){.route, .compass{animation:none;}}
+
+  .panel{position:relative;z-index:2;background:var(--ink-mid);border:1px solid var(--ink-line);border-radius:var(--radius);padding:30px 30px 26px;margin-top:8px;}
+  .panel-label{font-family:var(--mono);font-size:0.76rem;color:var(--fog);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;}
+  textarea{width:100%;min-height:96px;resize:vertical;background:transparent;border:none;color:var(--ivory);font-family:var(--serif);font-size:1.18rem;line-height:1.4;padding:0;margin-bottom:20px;}
+  textarea::placeholder{color:#4E5A85;font-style:italic;}
+  textarea:focus{outline:none;}
+
+  .history-row{display:none;flex-wrap:wrap;gap:8px;margin-bottom:18px;padding-bottom:18px;border-bottom:1px dashed var(--ink-line);}
+  .history-row.show{display:flex;}
+  .history-row-label{font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:#5E6A94;width:100%;margin-bottom:2px;}
+  .history-chip{
+    font-family:var(--sans);font-size:0.8rem;padding:6px 13px;border-radius:100px;
+    background:transparent;border:1px solid var(--ink-line);color:var(--fog);cursor:pointer;transition:all .18s;
+    max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .history-chip:hover{border-color:var(--brass);color:var(--ivory);}
+  .history-chip .dest{color:var(--brass);}
+
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;}
+  .chip{font-family:var(--sans);font-size:0.84rem;padding:7px 14px;border:1px solid var(--ink-line);border-radius:100px;background:transparent;color:var(--fog);cursor:pointer;transition:all .18s;}
+  .chip:hover{border-color:var(--brass);color:var(--ivory);}
+  .chip.on{background:var(--brass);border-color:var(--brass);color:var(--ink-deep);font-weight:600;}
+
+  .row-split{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;margin-bottom:24px;}
+  .budget-row{display:flex;gap:8px;}
+  .budget{flex:1;text-align:center;padding:11px 8px;border:1px solid var(--ink-line);border-radius:10px;cursor:pointer;font-size:0.85rem;color:var(--fog);transition:all .18s;}
+  .budget span{display:block;font-family:var(--mono);font-size:0.72rem;margin-top:3px;color:#5E6A94;}
+  .budget:hover{border-color:var(--fog);}
+  .budget.on{border-color:var(--rust);background:rgba(181,86,60,0.12);color:var(--ivory);}
+  .budget.on span{color:var(--rust);}
+
+  .steppers{display:flex;gap:18px;}
+  .stepper{text-align:center;}
+  .stepper-label{font-family:var(--mono);font-size:0.68rem;text-transform:uppercase;letter-spacing:0.06em;color:#5E6A94;margin-bottom:6px;}
+  .stepper-ctrl{display:flex;align-items:center;border:1px solid var(--ink-line);border-radius:10px;overflow:hidden;}
+  .stepper-ctrl button{background:transparent;border:none;color:var(--fog);width:30px;height:36px;cursor:pointer;font-size:1rem;transition:background .15s;}
+  .stepper-ctrl button:hover{background:rgba(255,255,255,0.05);color:var(--ivory);}
+  .stepper-ctrl .val{width:34px;text-align:center;font-family:var(--mono);font-size:0.92rem;color:var(--ivory);}
+
+  .go-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+  button.go{background:var(--rust);color:var(--ivory);border:none;padding:14px 26px;border-radius:10px;font-size:0.98rem;font-weight:600;cursor:pointer;transition:transform .15s, background .2s;font-family:var(--sans);}
+  button.go:hover{background:#C4664A;transform:translateY(-1px);}
+  button.go:disabled{opacity:0.6;cursor:wait;transform:none;}
+  .go-hint{font-family:var(--mono);font-size:0.76rem;color:#5E6A94;}
+  .error-msg{font-size:0.82rem;color:var(--rust);width:100%;margin-top:4px;display:none;}
+  .error-msg.show{display:block;}
+
+  #results{padding:20px 0 60px;display:none;}
+  #results.show{display:block;}
+  .results-head{margin-bottom:8px;}
+  .results-head .eyebrow{margin-bottom:10px;}
+  .results-head h2{font-family:var(--serif);font-weight:560;font-size:1.9rem;margin:0 0 8px;}
+  .results-head p{color:var(--fog);margin:0 0 12px;max-width:60ch;}
+  .source-row{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-bottom:36px;}
+  .source-tag{font-family:var(--mono);font-size:0.72rem;color:#5E6A94;}
+  .source-tag.ai{color:var(--brass);}
+
+  .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .card{background:var(--parchment);color:var(--ink-text);border-radius:var(--radius);padding:26px 24px 24px;display:flex;flex-direction:column;border:1px solid rgba(0,0,0,0.06);}
+  .card-photo{
+    margin:-26px -24px 18px;width:calc(100% + 48px);height:150px;position:relative;overflow:hidden;
+    border-radius:var(--radius) var(--radius) 0 0;background:linear-gradient(135deg,#3A4470,#171F3B);
+  }
+  .card-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}
+  .card.signature{background:var(--ivory);border:1.5px solid var(--brass);position:relative;}
+  .card.signature::before{content:'Recommandé';position:absolute;top:-11px;right:22px;background:var(--brass);color:var(--ink-deep);font-family:var(--mono);font-size:0.66rem;letter-spacing:0.06em;text-transform:uppercase;padding:4px 10px;border-radius:100px;font-weight:600;}
+  .tier-label{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--rust);margin-bottom:6px;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .tier-toggle{display:flex;gap:3px;background:rgba(0,0,0,0.05);border-radius:100px;padding:2px;}
+  .tt-btn{font-family:var(--sans);font-size:0.68rem;text-transform:none;letter-spacing:normal;padding:4px 9px;border-radius:100px;border:none;background:transparent;color:#8A7C50;cursor:pointer;transition:all .15s;}
+  .tt-btn.active{background:var(--rust);color:var(--ivory);font-weight:600;}
+  .tt-btn:hover:not(.active){color:var(--ink-text);}
+  .save-btn{background:none;border:none;cursor:pointer;font-size:1rem;color:#8A7C50;padding:2px 4px;line-height:1;transition:color .15s;}
+  .save-btn.saved, .save-btn:hover{color:var(--rust);}
+  .card h3{font-family:var(--serif);font-size:1.32rem;margin:0 0 4px;font-weight:600;}
+  .card .dest-meta{font-size:0.84rem;color:#665A3D;margin-bottom:18px;}
+  .card .price{font-family:var(--mono);font-size:1.7rem;font-weight:500;margin-bottom:2px;}
+  .card .price span{font-size:0.85rem;color:#665A3D;font-weight:400;}
+  .card .price-note{font-size:0.76rem;color:#7A6E4E;margin-bottom:20px;}
+
+  .block{margin-bottom:14px;}
+  .block-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:#8A7C50;margin-bottom:6px;font-weight:600;}
+  .block ul{margin:0;padding-left:0;list-style:none;font-size:0.88rem;}
+  .block li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dotted rgba(0,0,0,0.08);}
+  .block li:last-child{border-bottom:none;}
+  .mini-link{font-family:var(--mono);font-size:0.68rem;color:var(--rust);text-decoration:none;white-space:nowrap;flex-shrink:0;}
+  .mini-link:hover{text-decoration:underline;}
+
+  .card-cta{margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:8px;}
+  .book-btn{width:100%;background:var(--ink-deep);color:var(--ivory);border:none;padding:12px;border-radius:8px;font-family:var(--sans);font-weight:600;font-size:0.88rem;cursor:pointer;transition:background .2s;text-decoration:none;text-align:center;display:block;}
+  .book-btn:hover{background:#1B2340;}
+  .book-btn.secondary{background:transparent;border:1px solid rgba(0,0,0,0.15);color:var(--ink-text);}
+  .book-btn.secondary:hover{background:rgba(0,0,0,0.04);}
+  .book-btn.ghost{background:transparent;border:1px dashed rgba(0,0,0,0.2);color:var(--ink-text);font-weight:500;}
+  .commission-note{font-size:0.68rem;color:#8A7C50;margin-top:2px;text-align:center;}
+
+  .refine-box{border-top:1px dashed rgba(0,0,0,0.12);margin-top:16px;padding-top:14px;}
+  .refine-toggle{background:none;border:none;padding:0;font-family:var(--sans);font-size:0.82rem;color:#8A7C50;cursor:pointer;text-decoration:underline;text-underline-offset:2px;}
+  .refine-toggle:hover{color:var(--rust);}
+  .refine-panel{margin-top:10px;}
+  .refine-input{
+    width:100%;min-height:60px;resize:vertical;font-family:var(--sans);font-size:0.86rem;
+    border:1px solid rgba(0,0,0,0.15);border-radius:8px;padding:9px 10px;color:var(--ink-text);
+    background:rgba(255,255,255,0.4);margin-bottom:8px;
+  }
+  .refine-input:focus{outline:2px solid var(--brass);outline-offset:1px;}
+  .refine-submit{font-size:0.84rem;padding:9px;}
+  .refine-msg{font-size:0.76rem;margin-top:6px;min-height:1em;}
+  .refine-msg.error{color:var(--rust);}
+  .refine-msg.ok{color:#5C7A3A;}
+
+  .skeleton-card{background:var(--ink-mid);border:1px solid var(--ink-line);border-radius:var(--radius);padding:26px 24px;height:400px;position:relative;overflow:hidden;}
+  .skeleton-card::after{content:'';position:absolute;inset:0;background:linear-gradient(100deg, transparent 30%, rgba(255,255,255,0.06) 50%, transparent 70%);animation:shimmer 1.4s infinite;}
+  @keyframes shimmer{from{transform:translateX(-100%);}to{transform:translateX(100%);}}
+  @media (prefers-reduced-motion: reduce){.skeleton-card::after{animation:none;}}
+
+  .regen-row{text-align:center;margin-top:8px;}
+  .regen-link{background:none;border:none;color:var(--fog);font-family:var(--mono);font-size:0.78rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;}
+  .regen-link:hover{color:var(--brass);}
+  .regen-link:disabled{opacity:0.5;cursor:wait;}
+
+  .saved-section{padding:60px 0;border-top:1px solid var(--ink-line);}
+  .saved-section h2{font-family:var(--serif);font-size:1.5rem;font-weight:560;margin:0 0 6px;}
+  .saved-section .sub{color:var(--fog);font-size:0.88rem;margin:0 0 26px;}
+  .saved-empty{color:#5E6A94;font-size:0.88rem;font-family:var(--mono);padding:20px 0;}
+  .saved-list{display:grid;grid-template-columns:repeat(auto-fill, minmax(230px,1fr));gap:14px;}
+  .saved-item{background:var(--ink-mid);border:1px solid var(--ink-line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:6px;}
+  .saved-item .si-tier{font-family:var(--mono);font-size:0.66rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--brass);}
+  .saved-item .si-name{font-family:var(--serif);font-size:1.05rem;font-weight:600;}
+  .saved-item .si-meta{font-size:0.78rem;color:var(--fog);}
+  .saved-item .si-price{font-family:var(--mono);font-size:1rem;color:var(--ivory);margin-top:2px;}
+  .saved-item-actions{display:flex;gap:10px;margin-top:8px;}
+  .si-link, .si-remove{font-size:0.74rem;background:none;border:none;cursor:pointer;padding:0;text-decoration:underline;text-underline-offset:2px;}
+  .si-link{color:var(--fog);}
+  .si-link:hover{color:var(--ivory);}
+  .si-remove{color:#7A5548;}
+  .si-remove:hover{color:var(--rust);}
+
+  .how{padding:70px 0;border-top:1px solid var(--ink-line);}
+  .how h2{font-family:var(--serif);font-size:1.7rem;font-weight:560;margin:0 0 46px;max-width:20ch;}
+  .waypoints{position:relative;display:grid;grid-template-columns:repeat(3,1fr);gap:36px;}
+  .waypoints::before{content:'';position:absolute;top:11px;left:8%;right:8%;height:1px;background:repeating-linear-gradient(90deg, var(--ink-line) 0 6px, transparent 6px 12px);}
+  .wp{position:relative;}
+  .wp-marker{width:24px;height:24px;border-radius:50%;background:var(--ink-deep);border:1.5px solid var(--brass);display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:0.68rem;color:var(--brass);margin-bottom:18px;position:relative;z-index:1;}
+  .wp h4{font-family:var(--serif);font-size:1.1rem;margin:0 0 8px;font-weight:600;}
+  .wp p{color:var(--fog);font-size:0.9rem;margin:0;max-width:32ch;}
+
+  .honesty{padding:0 0 60px;}
+  .honesty-box{background:var(--ink-mid);border:1px solid var(--ink-line);border-radius:var(--radius);padding:26px 28px;}
+  .honesty-box h4{font-family:var(--serif);font-size:1.1rem;margin:0 0 10px;color:var(--brass);}
+  .honesty-box p{color:var(--fog);font-size:0.9rem;margin:0 0 8px;}
+  .honesty-box p:last-child{margin-bottom:0;}
+
+  footer{border-top:1px solid var(--ink-line);padding:34px 0 44px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
+  footer .foot-brand{font-family:var(--serif);font-size:1.1rem;}
+  footer .foot-note{font-size:0.82rem;color:var(--fog);max-width:44ch;}
+
+  /* DETAIL OVERLAY */
+  .detail-overlay{
+    position:fixed;inset:0;background:rgba(6,9,20,0.82);backdrop-filter:blur(3px);
+    display:none;align-items:flex-start;justify-content:center;z-index:100;padding:32px 20px;overflow-y:auto;
+  }
+  .detail-overlay.show{display:flex;}
+  .detail-panel{
+    background:var(--ink-deep);border:1px solid var(--ink-line);border-radius:18px;
+    max-width:920px;width:100%;overflow:hidden;position:relative;margin-bottom:32px;
+  }
+  .detail-close{
+    position:absolute;top:16px;right:16px;z-index:5;width:36px;height:36px;border-radius:50%;
+    background:rgba(14,19,38,0.7);border:1px solid rgba(255,255,255,0.2);color:var(--ivory);
+    font-size:1.2rem;cursor:pointer;line-height:1;
+  }
+  .detail-hero{
+    height:240px;position:relative;background:linear-gradient(135deg,#1B2340,#0E1326);
+    display:flex;align-items:flex-end;overflow:hidden;
+  }
+  .detail-hero img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0.55;filter:saturate(0.85) contrast(1.05);}
+  .detail-hero-overlay{position:relative;z-index:2;padding:26px 30px;background:linear-gradient(to top, rgba(6,9,20,0.9), transparent);width:100%;}
+  .detail-eyebrow{font-family:var(--mono);font-size:0.72rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--brass);margin-bottom:6px;}
+  .detail-hero-overlay h2{font-family:var(--serif);font-size:1.9rem;margin:0 0 4px;}
+  .detail-gallery{display:none;gap:8px;padding:12px 30px;overflow-x:auto;border-bottom:1px solid var(--ink-line);background:var(--ink-mid);}
+  .detail-gallery.show{display:flex;}
+  .detail-gallery img{width:76px;height:56px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:0.65;transition:opacity .15s, outline .15s;flex-shrink:0;outline:2px solid transparent;outline-offset:-2px;}
+  .detail-gallery img:hover{opacity:1;}
+  .detail-gallery img.active{opacity:1;outline-color:var(--brass);}
+  .detail-meta{font-size:0.86rem;color:var(--fog);}
+
+  .detail-body{display:grid;grid-template-columns:1.4fr 1fr;gap:0;}
+  .detail-days{padding:26px 30px;border-right:1px solid var(--ink-line);}
+  .day-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:12px;margin-bottom:16px;border-bottom:1px solid var(--ink-line);}
+  .day-tab{
+    flex-shrink:0;font-family:var(--mono);font-size:0.78rem;padding:7px 13px;border-radius:100px;
+    background:transparent;border:1px solid var(--ink-line);color:var(--fog);cursor:pointer;white-space:nowrap;
+  }
+  .day-tab.active{background:var(--brass);border-color:var(--brass);color:var(--ink-deep);font-weight:600;}
+  .day-panel{display:none;}
+  .day-panel.active{display:block;}
+  .day-panel h4{font-family:var(--serif);font-size:1.15rem;margin:0 0 14px;}
+  .day-slot{display:flex;gap:14px;margin-bottom:14px;}
+  .day-slot .dtime{font-family:var(--mono);font-size:0.74rem;color:var(--brass);width:70px;flex-shrink:0;padding-top:2px;}
+  .day-slot .dtext{font-size:0.92rem;color:var(--ivory);}
+  .day-loading{color:var(--fog);font-family:var(--mono);font-size:0.82rem;padding:20px 0;}
+  .day-error{color:var(--rust);font-size:0.85rem;padding:14px 0;}
+
+  .detail-side{padding:26px 24px;}
+  .detail-price{font-family:var(--mono);font-size:1.5rem;color:var(--ivory);margin-bottom:2px;}
+  .detail-price-note{font-size:0.78rem;color:var(--fog);margin-bottom:18px;}
+  .detail-side .book-btn, .detail-side button.book-btn{margin-bottom:8px;color:var(--ivory);}
+  .detail-side .book-btn.secondary, .detail-side .book-btn.ghost{color:var(--ivory);border-color:var(--ink-line);}
+  .detail-side .book-btn.ghost:hover, .detail-side .book-btn.secondary:hover{background:rgba(255,255,255,0.05);}
+  .detail-map{border-radius:10px;overflow:hidden;margin-top:14px;border:1px solid var(--ink-line);filter:saturate(0.7) brightness(0.92);}
+  .detail-map iframe{width:100%;height:180px;border:0;display:block;}
+  .share-confirm{font-size:0.76rem;color:var(--brass);margin-top:8px;min-height:1em;}
+
+  @media (max-width:860px){
+    .hero-grid{grid-template-columns:1fr;}
+    .chart{margin:0 auto;max-width:280px;order:-1;}
+    .cards{grid-template-columns:1fr;}
+    .waypoints{grid-template-columns:1fr;gap:26px;}
+    .waypoints::before{display:none;}
+    nav{flex-direction:column;gap:14px;align-items:flex-start;}
+    .row-split{grid-template-columns:1fr;}
+    .steppers{justify-content:space-between;}
+    .detail-body{grid-template-columns:1fr;}
+    .detail-days{border-right:none;border-bottom:1px solid var(--ink-line);}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Dérive<span class="dot">●</span></div>
+  <div class="nav-links">
+    <a href="#panel">Composer</a>
+    <a href="#saved">Mes voyages <span class="nav-badge" id="savedCount">0</span></a>
+    <a href="#how">Comment ça marche</a>
+  </div>
+</nav>
+
+<div class="hero wrap">
+  <div class="hero-grid">
+    <div>
+      <div class="eyebrow">Séjours composés à la demande — par IA</div>
+      <h1>Décrivez le voyage <em>que vous n'avez pas</em><br>encore trouvé les mots pour chercher.</h1>
+      <p class="lede">Un mood, un budget, une ambiance — une phrase suffit. Dérive interroge Claude pour composer l'itinéraire, détaille chaque jour, et vous envoie réserver sur les vrais sites partenaires.</p>
+    </div>
+    <div class="chart" aria-hidden="true">
+      <svg viewBox="0 0 400 400">
+        <g class="compass" opacity="0.35">
+          <circle cx="200" cy="200" r="150" stroke="#2A3560" stroke-width="1" fill="none"/>
+          <line x1="200" y1="60" x2="200" y2="90" stroke="#C9A227" stroke-width="1.5"/>
+          <line x1="200" y1="310" x2="200" y2="340" stroke="#2A3560" stroke-width="1"/>
+          <line x1="60" y1="200" x2="90" y2="200" stroke="#2A3560" stroke-width="1"/>
+          <line x1="310" y1="200" x2="340" y2="200" stroke="#2A3560" stroke-width="1"/>
+        </g>
+        <path id="routePath" class="route" d="M 90 300 C 130 260, 150 320, 190 250 S 260 150, 230 100 S 280 70, 310 90"/>
+        <circle class="waypoint" cx="90" cy="300" r="5"/>
+        <circle class="waypoint" cx="190" cy="250" r="5"/>
+        <circle class="waypoint active" id="wpEnd" cx="310" cy="90" r="6"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="panel">
+  <div class="panel">
+    <div class="panel-label">Racontez votre envie</div>
+
+    <div class="history-row" id="historyRow">
+      <div class="history-row-label">Recherches récentes</div>
+    </div>
+
+    <textarea id="promptInput" placeholder="Ex. Une semaine au calme au bord de la mer, ambiance romantique, on aime bien manger, budget confortable…"></textarea>
+
+    <div class="chips" id="chips">
+      <button class="chip" data-tag="plage">Plage</button>
+      <button class="chip" data-tag="montagne">Montagne</button>
+      <button class="chip" data-tag="ville">Ville</button>
+      <button class="chip" data-tag="aventure">Aventure</button>
+      <button class="chip" data-tag="romantique">Romantique</button>
+      <button class="chip" data-tag="famille">Famille</button>
+      <button class="chip" data-tag="culture">Culture</button>
+    </div>
+
+    <div class="row-split">
+      <div class="budget-row" id="budgetRow">
+        <div class="budget" data-label="Économique">Économique<span>≈ 700–900€</span></div>
+        <div class="budget on" data-label="Confort">Confort<span>≈ 1100–1500€</span></div>
+        <div class="budget" data-label="Signature">Signature<span>≈ 2000€ et +</span></div>
+      </div>
+      <div class="steppers">
+        <div class="stepper">
+          <div class="stepper-label">Voyageurs</div>
+          <div class="stepper-ctrl">
+            <button type="button" id="travMinus" aria-label="Moins de voyageurs">−</button>
+            <span class="val" id="travVal">2</span>
+            <button type="button" id="travPlus" aria-label="Plus de voyageurs">+</button>
+          </div>
+        </div>
+        <div class="stepper">
+          <div class="stepper-label">Nuits</div>
+          <div class="stepper-ctrl">
+            <button type="button" id="nightMinus" aria-label="Moins de nuits">−</button>
+            <span class="val" id="nightVal">6</span>
+            <button type="button" id="nightPlus" aria-label="Plus de nuits">+</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="go-row">
+      <button class="go" id="goBtn">Tracer mon itinéraire</button>
+      <span class="go-hint" id="goHint">/ pour 2 personnes, 6 nuits</span>
+      <div class="error-msg" id="errorMsg"></div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap" id="results">
+  <div class="results-head">
+    <div class="eyebrow">Itinéraire tracé</div>
+    <h2 id="resultTitle">Trois façons de vivre ce voyage</h2>
+    <p id="resultSub">Même destination, trois niveaux d'expérience. Choisissez, on s'occupe du reste.</p>
+    <div class="source-row"><span class="source-tag" id="sourceTag"></span></div>
+  </div>
+  <div class="cards" id="cards"></div>
+  <div class="regen-row">
+    <button class="regen-link" id="regenBtn">Cette destination ne vous tente pas ? Proposer autre chose →</button>
+  </div>
+</div>
+
+<div class="wrap saved-section" id="saved">
+  <h2>Mes voyages sauvegardés</h2>
+  <p class="sub">Enregistrés dans ce navigateur — cliquez l'étoile sur une formule pour la garder ici.</p>
+  <div id="savedList"><div class="saved-empty">Aucun séjour sauvegardé pour l’instant.</div></div>
+</div>
+
+<div class="wrap how" id="how">
+  <h2>De la phrase à la valise, en trois temps.</h2>
+  <div class="waypoints">
+    <div class="wp"><div class="wp-marker">01</div><h4>Vous décrivez</h4><p>Style, ambiance, budget, voyageurs et nuits — ajustables librement.</p></div>
+    <div class="wp"><div class="wp-marker">02</div><h4>Claude compose</h4><p>Destination, hôtel, activités, tables — puis un déroulé jour par jour à la demande.</p></div>
+    <div class="wp"><div class="wp-marker">03</div><h4>Vous réservez ailleurs</h4><p>Chaque élément s'ouvre sur le vrai site du partenaire pour finaliser au prix réel.</p></div>
+  </div>
+</div>
+
+<div class="wrap honesty" id="honesty">
+  <div class="honesty-box">
+    <h4>Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
+    <p><strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.</p>
+    <p><strong>Important :</strong> cet identifiant n'est PAS un compte avec mot de passe — il n'y a pas encore de connexion. Si vous videz les données de ce navigateur ou changez d'appareil, vous perdez l'accès à cet historique. Une vraie authentification (email, Google...) est l'étape suivante avant un vrai lancement public.</p>
+    <p><strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (dérive.com/s/abc123) demanderait de stocker l'itinéraire à une adresse dédiée — pas encore construit.</p>
+    <p><strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
+  </div>
+</div>
+
+<footer class="wrap">
+  <div class="foot-brand">Dérive</div>
+  <div class="foot-note">Dérive vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
+</footer>
+
+<!-- DETAIL OVERLAY -->
+<div class="detail-overlay" id="detailOverlay">
+  <div class="detail-panel">
+    <button class="detail-close" id="detailClose" aria-label="Fermer le détail">×</button>
+    <div class="detail-hero">
+      <img id="detailHeroImg" alt="" style="display:none;">
+      <div class="detail-hero-overlay">
+        <div class="detail-eyebrow" id="detailTierLabel"></div>
+        <h2 id="detailTitle"></h2>
+        <div class="detail-meta" id="detailMeta"></div>
+      </div>
+    </div>
+    <div class="detail-gallery" id="detailGallery"></div>
+    <div class="detail-body">
+      <div class="detail-days">
+        <div class="day-tabs" id="dayTabs"></div>
+        <div id="dayPanels"><div class="day-loading">Claude compose le déroulé jour par jour…</div></div>
+      </div>
+      <aside class="detail-side">
+        <div class="detail-price" id="detailPrice"></div>
+        <div class="detail-price-note" id="detailPriceNote"></div>
+        <a class="book-btn" id="detailBookBtn" target="_blank" rel="noopener">Réserver l'hôtel sur Booking.com</a>
+        <a class="book-btn secondary" id="detailFlightsBtn" target="_blank" rel="noopener">Chercher les vols</a>
+        <button class="book-btn ghost" id="detailShareBtn" type="button">Partager ce séjour</button>
+        <button class="book-btn ghost" id="detailExportBtn" type="button">Télécharger en .txt</button>
+        <div class="share-confirm" id="shareConfirm"></div>
+        <div class="detail-map">
+          <iframe id="detailMapFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
+      </aside>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  // --- Session id (pseudo-account, no login) -----------------------------
+  // Real localStorage works fine here — this is a normal deployed site now,
+  // not the claude.ai artifact sandbox. This id just scopes "my" trips and
+  // history in the database; it is NOT authentication (see README).
+  function getSessionId(){
+    let id = localStorage.getItem('derive_session_id');
+    if(!id){
+      id = (crypto.randomUUID ? crypto.randomUUID() : (Date.now() + '_' + Math.random().toString(36).slice(2)));
+      localStorage.setItem('derive_session_id', id);
+    }
+    return id;
+  }
+  const sessionId = getSessionId();
+
+  async function callBackend(path, body){
+    const res = await fetch('/api' + path, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body)
+    });
+    const data = await res.json().catch(function(){ return {}; });
+    if(!res.ok) throw new Error(data.error || ('Erreur serveur (' + res.status + ')'));
+    return data;
+  }
+
+  const chipEls = document.querySelectorAll('.chip');
+  const activeTags = new Set();
+  chipEls.forEach(function(c){
+    c.addEventListener('click', function(){
+      c.classList.toggle('on');
+      const t = c.dataset.tag;
+      activeTags.has(t) ? activeTags.delete(t) : activeTags.add(t);
+    });
+  });
+
+  let budgetLabel = "Confort";
+  const budgetEls = document.querySelectorAll('.budget');
+  budgetEls.forEach(function(b){
+    b.addEventListener('click', function(){
+      budgetEls.forEach(function(x){ x.classList.remove('on'); });
+      b.classList.add('on');
+      budgetLabel = b.dataset.label;
+    });
+  });
+
+  let travelers = 2, nights = 6;
+  const travVal = document.getElementById('travVal');
+  const nightVal = document.getElementById('nightVal');
+  const goHint = document.getElementById('goHint');
+  function updateHint(){ goHint.textContent = "/ pour " + travelers + " personne" + (travelers>1?'s':'') + ", " + nights + " nuits"; }
+  document.getElementById('travMinus').addEventListener('click', function(){ travelers=Math.max(1,travelers-1); travVal.textContent=travelers; updateHint(); });
+  document.getElementById('travPlus').addEventListener('click', function(){ travelers=Math.min(8,travelers+1); travVal.textContent=travelers; updateHint(); });
+  document.getElementById('nightMinus').addEventListener('click', function(){ nights=Math.max(2,nights-1); nightVal.textContent=nights; updateHint(); });
+  document.getElementById('nightPlus').addEventListener('click', function(){ nights=Math.min(21,nights+1); nightVal.textContent=nights; updateHint(); });
+
+  const fallback = {
+    destinations: [
+      { destination:"Le Golfe de Naples", country:"Italie", tiers:[
+        {key:'low', label:'Essentiel', hotel:{name:"Casa Marea", pricePerNight:90}, activities:["Balade en bateau à Capri","Coucher de soleil à Positano"], restaurants:["Trattoria da Peppino"], estimatedTotal:980},
+        {key:'mid', label:'Confort', hotel:{name:"Villa Aurora", pricePerNight:165}, activities:["Balade en bateau à Capri","Cours de cuisine napolitaine","Visite privée de Pompéi"], restaurants:["Il Buco","La Terrazza Bosquet"], estimatedTotal:1560},
+        {key:'high', label:'Signature', hotel:{name:"Le Belvédère Sorrento", pricePerNight:320}, activities:["Balade en bateau privé à Capri","Cours de cuisine napolitaine","Visite privée de Pompéi","Dîner sur la terrasse d'un palazzo"], restaurants:["Il Buco","La Terrazza Bosquet","Ristorante Il Faro"], estimatedTotal:2890}
+      ]},
+      { destination:"Les Calanques", country:"France", tiers:[
+        {key:'low', label:'Essentiel', hotel:{name:"Auberge du Cap", pricePerNight:78}, activities:["Randonnée Sugiton","Kayak dans les criques"], restaurants:["Chez Fonfon"], estimatedTotal:870},
+        {key:'mid', label:'Confort', hotel:{name:"Mas des Calanques", pricePerNight:145}, activities:["Randonnée Sugiton","Kayak dans les criques","Plongée snorkeling"], restaurants:["Chez Fonfon","Le Rhul"], estimatedTotal:1380},
+        {key:'high', label:'Signature', hotel:{name:"Villa Sormiou Suites", pricePerNight:290}, activities:["Randonnée Sugiton privée","Kayak dans les criques","Plongée snorkeling","Balade en calanque à l'aube"], restaurants:["Chez Fonfon","Le Rhul","La Table du Fenouil"], estimatedTotal:2560}
+      ]},
+      { destination:"Lisbonne", country:"Portugal", tiers:[
+        {key:'low', label:'Essentiel', hotel:{name:"Hostel Alfama Views", pricePerNight:65}, activities:["Tram 28 et Alfama à pied","Dégustation de pastéis de nata"], restaurants:["Time Out Market"], estimatedTotal:790},
+        {key:'mid', label:'Confort', hotel:{name:"Boutique Bairro Alto", pricePerNight:135}, activities:["Tram 28 et Alfama à pied","Dégustation de pastéis de nata","Excursion à Sintra"], restaurants:["Time Out Market","Cervejaria Ramiro"], estimatedTotal:1340},
+        {key:'high', label:'Signature', hotel:{name:"Palácio das Artes", pricePerNight:280}, activities:["Tram 28 et Alfama à pied","Fado dans un bar caché","Excursion privée à Sintra","Dégustation de pastéis de nata"], restaurants:["Time Out Market","Cervejaria Ramiro","A Cevicheria"], estimatedTotal:2410}
+      ]}
+    ]
+  };
+
+  async function callGenerate(promptText, nightsN, travelersN, excludeDestinations){
+    return await callBackend('/generate', {
+      promptText: promptText, budgetLabel: budgetLabel, nights: nightsN, travelers: travelersN,
+      excludeDestinations: excludeDestinations || null, tags: [...activeTags]
+    });
+  }
+
+  async function callDayPlan(destinationFull, tier, nightsN){
+    return await callBackend('/day-plan', { destinationFull: destinationFull, tier: tier, nights: nightsN });
+  }
+
+  async function callRefine(destination, country, tier, instruction, nightsN, travelersN){
+    return await callBackend('/refine', {
+      destination: destination, country: country, tier: tier, instruction: instruction,
+      nights: nightsN, travelers: travelersN
+    });
+  }
+
+  function bookingUrl(destination){ return "https://www.booking.com/searchresults.html?ss=" + encodeURIComponent(destination); }
+  function activityUrl(query, destination){ return "https://www.getyourguide.com/s/?q=" + encodeURIComponent(query + " " + destination); }
+  function restaurantUrl(name, destination){ return "https://www.google.com/maps/search/" + encodeURIComponent(name + " " + destination); }
+  function flightsUrl(destination){ return "https://www.google.com/travel/flights?q=" + encodeURIComponent("Vols vers " + destination); }
+  function mapEmbedUrl(destination){ return "https://www.google.com/maps?q=" + encodeURIComponent(destination) + "&output=embed"; }
+
+  // Real photos via our own server (server-to-server fetch to Wikipedia has
+  // no CORS/sandbox issue at all, unlike calling it from the browser).
+  async function fetchPhoto(name){
+    try{
+      const res = await fetch('/api/photo?name=' + encodeURIComponent(name));
+      const data = await res.json();
+      return data.src || null;
+    }catch(_e){ return null; }
+  }
+  async function fetchGallery(name){
+    try{
+      const res = await fetch('/api/gallery?name=' + encodeURIComponent(name));
+      const data = await res.json();
+      return data.urls || [];
+    }catch(_e){ return []; }
+  }
+
+  let currentItinerary = null;
+  let currentNights = 6, currentTravelers = 2, currentPromptText = '';
+
+  function tierKeyForBudget(label){
+    return label === 'Économique' ? 'low' : (label === 'Signature' ? 'high' : 'mid');
+  }
+
+  function renderTierBody(dest, tier, destination){
+    return '' +
+      '<div class="price">' + tier.estimatedTotal + '€ <span>total estimé</span></div>' +
+      '<div class="price-note">Hôtel suggéré : ' + tier.hotel.name + ' · ~' + tier.hotel.pricePerNight + '€/nuit</div>' +
+      '<div class="block"><div class="block-label">Activités</div><ul>' +
+        tier.activities.map(function(a){ return '<li><span>' + a + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + activityUrl(a, destination) + '">Voir →</a></li>'; }).join('') +
+      '</ul></div>' +
+      '<div class="block"><div class="block-label">Tables suggérées</div><ul>' +
+        tier.restaurants.map(function(r){ return '<li><span>' + r + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + restaurantUrl(r, destination) + '">Voir →</a></li>'; }).join('') +
+      '</ul></div>';
+  }
+
+  function buildCard(destIdx, dest, tierKey, nightsN, travelersN){
+    const tier = dest.tiers.find(function(t){ return t.key === tierKey; }) || dest.tiers[0];
+    const destination = dest.destination + (dest.country ? ", " + dest.country : "");
+    return '' +
+      '<div class="card" data-dest="' + destIdx + '" data-tier="' + tier.key + '">' +
+        '<div class="card-photo"><img alt="' + dest.destination + '" loading="lazy"></div>' +
+        '<div class="tier-label">' +
+          '<div class="tier-toggle">' + dest.tiers.map(function(t){ return '<button class="tt-btn' + (t.key===tier.key?' active':'') + '" data-tt="' + t.key + '">' + t.label + '</button>'; }).join('') + '</div>' +
+          '<button class="save-btn" data-action="save" title="Sauvegarder ce séjour">☆</button>' +
+        '</div>' +
+        '<h3>' + dest.destination + '</h3>' +
+        '<div class="dest-meta">' + (dest.country||'') + ' · ' + nightsN + ' nuits · ' + travelersN + ' voyageur' + (travelersN>1?'s':'') + '</div>' +
+        '<div class="tier-body">' + renderTierBody(dest, tier, destination) + '</div>' +
+        '<div class="refine-box">' +
+          '<button class="refine-toggle" type="button" data-action="toggle-refine">✎ Personnaliser cette formule</button>' +
+          '<div class="refine-panel" style="display:none;">' +
+            '<textarea class="refine-input" placeholder="Ex. enlève la visite du musée, ajoute une activité plus tranquille, hôtel un peu moins cher…"></textarea>' +
+            '<button class="book-btn ghost refine-submit" type="button" data-action="refine">Remodeler cette formule</button>' +
+            '<div class="refine-msg"></div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="card-cta">' +
+          '<button class="book-btn ghost" data-action="detail" type="button">Voir le détail jour par jour</button>' +
+          '<a class="book-btn" target="_blank" rel="noopener" href="' + bookingUrl(destination) + '">Réserver l\'hôtel sur Booking.com</a>' +
+          '<a class="book-btn secondary" target="_blank" rel="noopener" href="' + flightsUrl(destination) + '">Chercher les vols</a>' +
+          '<div class="commission-note">Prix affiché estimé par IA — à confirmer sur chaque plateforme</div>' +
+        '</div>' +
+      '</div>';
+  }
+
+  function skeletons(n){ return Array(n||3).fill('<div class="skeleton-card"></div>').join(''); }
+
+  const goBtn = document.getElementById('goBtn');
+  const regenBtn = document.getElementById('regenBtn');
+  const results = document.getElementById('results');
+  const cardsEl = document.getElementById('cards');
+  const routePath = document.getElementById('routePath');
+  const wpEnd = document.getElementById('wpEnd');
+  const errorMsg = document.getElementById('errorMsg');
+  const sourceTag = document.getElementById('sourceTag');
+
+  function loadCardPhotos(itinerary){
+    itinerary.destinations.forEach(function(d, idx){
+      fetchPhoto(d.destination).then(function(src){
+        const imgEl = cardsEl.querySelector('.card[data-dest="' + idx + '"] .card-photo img');
+        if(imgEl && src) imgEl.src = src;
+      });
+    });
+  }
+
+  async function runGeneration(excludeDestinations){
+    const raw = document.getElementById('promptInput').value.trim();
+    if(!raw){ document.getElementById('promptInput').focus(); return; }
+
+    errorMsg.classList.remove('show');
+    results.classList.add('show');
+    cardsEl.innerHTML = skeletons();
+    results.scrollIntoView({behavior:'smooth', block:'start'});
+
+    goBtn.disabled = true; regenBtn.disabled = true;
+    goBtn.textContent = "Claude compose l'itinéraire…";
+    routePath.classList.add('done');
+    wpEnd.setAttribute('r', 8);
+
+    let itinerary, usedFallback = false;
+    try{
+      itinerary = await callGenerate(raw, nights, travelers, excludeDestinations);
+    }catch(err){
+      console.error(err);
+      itinerary = fallback;
+      usedFallback = true;
+      errorMsg.textContent = "La génération IA n'a pas répondu à temps — voici des destinations de secours pour la démonstration.";
+      errorMsg.classList.add('show');
+    }
+
+    currentItinerary = itinerary;
+    currentNights = nights; currentTravelers = travelers; currentPromptText = raw;
+    const defaultTier = tierKeyForBudget(budgetLabel);
+
+    cardsEl.style.gridTemplateColumns = "repeat(" + itinerary.destinations.length + ", 1fr)";
+    cardsEl.innerHTML = itinerary.destinations.map(function(d, idx){ return buildCard(idx, d, defaultTier, nights, travelers); }).join('');
+    loadCardPhotos(itinerary);
+
+    const names = itinerary.destinations.map(function(d){ return d.destination; });
+    document.getElementById('resultTitle').textContent = "Trois destinations pour cette envie";
+    document.getElementById('resultSub').textContent = "Claude a retenu " + names.join(', ') + ". Chaque carte a ses 3 formules — basculez librement entre elles, ou personnalisez-en une.";
+    sourceTag.textContent = usedFallback ? "Source : sélection de secours (hors ligne)" : "Source : généré en direct par Claude";
+    sourceTag.className = "source-tag" + (usedFallback ? "" : " ai");
+
+    goBtn.disabled = false; regenBtn.disabled = false;
+    goBtn.textContent = "Tracer mon itinéraire";
+
+    if(!usedFallback){
+      callBackend('/history', {
+        sessionId: sessionId, promptText: raw, tags: [...activeTags], budgetLabel: budgetLabel,
+        nights: nights, travelers: travelers, destination: names.join(' / ')
+      }).then(renderHistory).catch(function(err){ console.warn('Historique non sauvegardé', err); });
+    }
+  }
+
+  goBtn.addEventListener('click', function(){ runGeneration(null); });
+  regenBtn.addEventListener('click', function(){
+    if(!currentItinerary) return;
+    document.getElementById('promptInput').value = currentPromptText;
+    runGeneration(currentItinerary.destinations.map(function(d){ return d.destination; }));
+  });
+
+  cardsEl.addEventListener('click', async function(e){
+    const saveBtn = e.target.closest('[data-action="save"]');
+    const detailBtn = e.target.closest('[data-action="detail"]');
+    const ttBtn = e.target.closest('.tt-btn');
+    const toggleRefineBtn = e.target.closest('[data-action="toggle-refine"]');
+    const refineBtn = e.target.closest('[data-action="refine"]');
+
+    if(ttBtn){
+      const cardEl = ttBtn.closest('.card');
+      const destIdx = parseInt(cardEl.dataset.dest, 10);
+      const dest = currentItinerary.destinations[destIdx];
+      const tier = dest.tiers.find(function(t){ return t.key === ttBtn.dataset.tt; });
+      if(!tier) return;
+      cardEl.dataset.tier = tier.key;
+      cardEl.querySelectorAll('.tt-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tt === tier.key); });
+      const destination = dest.destination + (dest.country ? ", " + dest.country : "");
+      cardEl.querySelector('.tier-body').innerHTML = renderTierBody(dest, tier, destination);
+      return;
+    }
+
+    if(toggleRefineBtn){
+      const panel = toggleRefineBtn.nextElementSibling;
+      const isOpen = panel.style.display !== 'none';
+      panel.style.display = isOpen ? 'none' : 'block';
+      toggleRefineBtn.textContent = isOpen ? '✎ Personnaliser cette formule' : '✕ Fermer';
+      return;
+    }
+
+    if(refineBtn){
+      const cardEl = refineBtn.closest('.card');
+      const destIdx = parseInt(cardEl.dataset.dest, 10);
+      const tierKey = cardEl.dataset.tier;
+      const dest = currentItinerary.destinations[destIdx];
+      const tierIdx = dest.tiers.findIndex(function(t){ return t.key === tierKey; });
+      const tier = dest.tiers[tierIdx];
+      const textarea = cardEl.querySelector('.refine-input');
+      const msgEl = cardEl.querySelector('.refine-msg');
+      const instruction = textarea.value.trim();
+      if(!instruction){ textarea.focus(); return; }
+
+      refineBtn.disabled = true;
+      refineBtn.textContent = 'Remodelage en cours…';
+      msgEl.textContent = '';
+      msgEl.className = 'refine-msg';
+
+      try{
+        const updatedTier = await callRefine(dest.destination, dest.country, tier, instruction, currentNights, currentTravelers);
+        updatedTier.key = tier.key;
+        updatedTier.label = tier.label;
+        dest.tiers[tierIdx] = updatedTier;
+        const destination = dest.destination + (dest.country ? ", " + dest.country : "");
+        cardEl.querySelector('.tier-body').innerHTML = renderTierBody(dest, updatedTier, destination);
+        msgEl.textContent = 'Formule mise à jour ✓';
+        msgEl.className = 'refine-msg ok';
+        textarea.value = '';
+      }catch(err){
+        console.error(err);
+        msgEl.textContent = "Le remodelage n'a pas abouti — réessayez dans un instant.";
+        msgEl.className = 'refine-msg error';
+      }finally{
+        refineBtn.disabled = false;
+        refineBtn.textContent = 'Remodeler cette formule';
+      }
+      return;
+    }
+
+    if(saveBtn){
+      const cardEl = saveBtn.closest('.card');
+      const destIdx = parseInt(cardEl.dataset.dest, 10);
+      const tierKey = cardEl.dataset.tier;
+      const dest = currentItinerary.destinations[destIdx];
+      const tier = dest.tiers.find(function(t){ return t.key === tierKey; });
+      const destination = dest.destination + (dest.country ? ", " + dest.country : "");
+      try{
+        await callBackend('/trips', {
+          sessionId: sessionId, name: dest.destination, meta: (dest.country||'') + ' · ' + tier.label,
+          price: tier.estimatedTotal + '€', tierLabel: tier.label, bookingHref: bookingUrl(destination)
+        });
+        saveBtn.textContent = '★';
+        saveBtn.classList.add('saved');
+        await renderSavedTrips();
+      }catch(err){ console.error('Impossible de sauvegarder ce séjour', err); }
+      return;
+    }
+
+    if(detailBtn){
+      const cardEl = detailBtn.closest('.card');
+      openDetail(parseInt(cardEl.dataset.dest, 10), cardEl.dataset.tier);
+    }
+  });
+
+  // --- Saved trips ---------------------------------------------------
+  const savedListEl = document.getElementById('savedList');
+  const savedCountEl = document.getElementById('savedCount');
+
+  savedListEl.addEventListener('click', async function(e){
+    const rm = e.target.closest('[data-remove]');
+    if(!rm) return;
+    try{
+      await fetch('/api/trips/' + encodeURIComponent(rm.dataset.remove) + '?sessionId=' + encodeURIComponent(sessionId), { method: 'DELETE' });
+      await renderSavedTrips();
+    }catch(err){ console.error(err); }
+  });
+
+  async function renderSavedTrips(){
+    try{
+      const res = await fetch('/api/trips?sessionId=' + encodeURIComponent(sessionId));
+      const items = await res.json();
+      if(!items.length){
+        savedListEl.innerHTML = '<div class="saved-empty">Aucun séjour sauvegardé pour l’instant.</div>';
+        savedCountEl.textContent = '0';
+        return;
+      }
+      savedCountEl.textContent = String(items.length);
+      savedListEl.innerHTML = items.map(function(it){
+        return '<div class="saved-item">' +
+          '<div class="si-tier">' + (it.tierLabel||'') + '</div>' +
+          '<div class="si-name">' + (it.name||'') + '</div>' +
+          '<div class="si-meta">' + (it.meta||'') + '</div>' +
+          '<div class="si-price">' + (it.price||'') + '</div>' +
+          '<div class="saved-item-actions">' +
+            '<a class="si-link" target="_blank" rel="noopener" href="' + (it.bookingHref||'#') + '">Réserver →</a>' +
+            '<button class="si-remove" data-remove="' + it.id + '">Retirer</button>' +
+          '</div></div>';
+      }).join('');
+    }catch(err){
+      console.error('Impossible de charger les séjours sauvegardés', err);
+      savedListEl.innerHTML = '<div class="saved-empty">Sauvegarde indisponible pour le moment.</div>';
+    }
+  }
+
+  // --- Search history --------------------------------------------------
+  const historyRow = document.getElementById('historyRow');
+
+  async function renderHistory(){
+    try{
+      const res = await fetch('/api/history?sessionId=' + encodeURIComponent(sessionId));
+      const items = await res.json();
+      if(!items.length){ historyRow.classList.remove('show'); return; }
+      historyRow.innerHTML = '<div class="history-row-label">Recherches récentes</div>' +
+        items.map(function(it, idx){
+          const short = (it.promptText||'').length > 42 ? it.promptText.slice(0,42) + '…' : (it.promptText||'');
+          return '<button class="history-chip" data-idx="' + idx + '">' + short + (it.destination ? ' <span class="dest">→ ' + it.destination + '</span>' : '') + '</button>';
+        }).join('');
+      historyRow.classList.add('show');
+      window._historyItems = items;
+    }catch(err){
+      console.error('Historique indisponible', err);
+    }
+  }
+
+  historyRow.addEventListener('click', function(e){
+    const chip = e.target.closest('.history-chip');
+    if(!chip) return;
+    const it = (window._historyItems || [])[parseInt(chip.dataset.idx, 10)];
+    if(!it) return;
+    document.getElementById('promptInput').value = it.promptText || '';
+    chipEls.forEach(function(c){ c.classList.toggle('on', (it.tags||[]).includes(c.dataset.tag)); });
+    activeTags.clear(); (it.tags||[]).forEach(function(t){ activeTags.add(t); });
+    budgetEls.forEach(function(b){ b.classList.toggle('on', b.dataset.label === it.budgetLabel); });
+    if(it.budgetLabel) budgetLabel = it.budgetLabel;
+    if(it.nights){ nights = it.nights; nightVal.textContent = nights; }
+    if(it.travelers){ travelers = it.travelers; travVal.textContent = travelers; }
+    updateHint();
+    document.getElementById('panel').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+
+  // --- Detail overlay ----------------------------------------------------
+  const detailOverlay = document.getElementById('detailOverlay');
+  const detailClose = document.getElementById('detailClose');
+  const dayTabs = document.getElementById('dayTabs');
+  const dayPanels = document.getElementById('dayPanels');
+  const shareConfirm = document.getElementById('shareConfirm');
+  let currentTier = null, currentDestinationFull = '';
+
+  function closeDetail(){
+    detailOverlay.classList.remove('show');
+    document.body.classList.remove('locked');
+  }
+  detailClose.addEventListener('click', closeDetail);
+  detailOverlay.addEventListener('click', function(e){ if(e.target === detailOverlay) closeDetail(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape') closeDetail(); });
+
+  async function openDetail(destIdx, tierKey){
+    if(!currentItinerary) return;
+    const dest = currentItinerary.destinations[destIdx];
+    if(!dest) return;
+    const tier = dest.tiers.find(function(t){ return t.key === tierKey; });
+    if(!tier) return;
+    currentTier = tier;
+    currentDestinationFull = dest.destination + (dest.country ? ", " + dest.country : "");
+
+    document.getElementById('detailTierLabel').textContent = tier.label;
+    document.getElementById('detailTitle').textContent = dest.destination;
+    document.getElementById('detailMeta').textContent = currentNights + ' nuits · ' + currentTravelers + ' voyageur' + (currentTravelers>1?'s':'') + ' · Hôtel : ' + tier.hotel.name;
+    document.getElementById('detailPrice').textContent = tier.estimatedTotal + '€';
+    document.getElementById('detailPriceNote').textContent = 'Total estimé, hôtel ~' + tier.hotel.pricePerNight + '€/nuit — à confirmer sur chaque plateforme';
+    document.getElementById('detailBookBtn').href = bookingUrl(currentDestinationFull);
+    document.getElementById('detailFlightsBtn').href = flightsUrl(currentDestinationFull);
+    document.getElementById('detailMapFrame').src = mapEmbedUrl(currentDestinationFull);
+    shareConfirm.textContent = '';
+
+    const img = document.getElementById('detailHeroImg');
+    const gallery = document.getElementById('detailGallery');
+    img.style.display = 'none';
+    gallery.classList.remove('show');
+    gallery.innerHTML = '';
+    dayTabs.innerHTML = '';
+    dayPanels.innerHTML = '<div class="day-loading">Claude compose le déroulé jour par jour…</div>';
+
+    detailOverlay.classList.add('show');
+    document.body.classList.add('locked');
+
+    fetchPhoto(dest.destination).then(function(src){
+      if(src){ img.src = src; img.style.display = 'block'; }
+    });
+    fetchGallery(dest.destination).then(function(urls){
+      if(!urls.length) return;
+      gallery.innerHTML = urls.map(function(u, i){ return '<img src="' + u + '" loading="lazy" alt="" data-src="' + u + '" class="' + (i===0?'active':'') + '">'; }).join('');
+      gallery.classList.add('show');
+      if(img.style.display === 'none'){ img.src = urls[0]; img.style.display = 'block'; }
+    });
+
+    try{
+      const plan = await callDayPlan(currentDestinationFull, tier, currentNights);
+      const days = plan.days;
+      let tabsHtml = days.map(function(d,i){ return '<button class="day-tab' + (i===0?' active':'') + '" data-day="' + i + '">Jour ' + d.day + '</button>'; }).join('');
+      let panelsHtml = days.map(function(d,i){
+        return '<div class="day-panel' + (i===0?' active':'') + '" data-day="' + i + '">' +
+          '<h4>' + (d.title || ('Jour ' + d.day)) + '</h4>' +
+          (d.slots||[]).map(function(s){ return '<div class="day-slot"><div class="dtime">' + s.time + '</div><div class="dtext">' + s.text + '</div></div>'; }).join('') +
+        '</div>';
+      }).join('');
+
+      if(plan.remainingNights > 0){
+        const restIdx = days.length;
+        const rangeLabel = 'Jours ' + (days.length + 1) + '–' + currentNights;
+        tabsHtml += '<button class="day-tab" data-day="' + restIdx + '">' + rangeLabel + '</button>';
+        panelsHtml += '<div class="day-panel" data-day="' + restIdx + '">' +
+          '<h4>Le reste du séjour</h4>' +
+          '<div class="day-slot"><div class="dtime">' + plan.remainingNights + ' nuit' + (plan.remainingNights>1?'s':'') + '</div><div class="dtext">' +
+            (plan.remainingSummary || "Le reste du séjour est laissé volontairement libre : profitez de l'hôtel, explorez à votre rythme, et piochez parmi les activités et tables déjà suggérées.") +
+          '</div></div>' +
+        '</div>';
+      }
+
+      dayTabs.innerHTML = tabsHtml;
+      dayPanels.innerHTML = panelsHtml;
+    }catch(err){
+      console.error(err);
+      dayPanels.innerHTML = '<div class="day-error">Le déroulé jour par jour n’a pas pu être généré pour le moment. Réessayez dans un instant.</div>';
+    }
+  }
+
+  dayTabs.addEventListener('click', function(e){
+    const tab = e.target.closest('.day-tab');
+    if(!tab) return;
+    dayTabs.querySelectorAll('.day-tab').forEach(function(t){ t.classList.remove('active'); });
+    dayPanels.querySelectorAll('.day-panel').forEach(function(p){ p.classList.remove('active'); });
+    tab.classList.add('active');
+    const target = dayPanels.querySelector('[data-day="' + tab.dataset.day + '"]');
+    if(target) target.classList.add('active');
+  });
+
+  document.getElementById('detailGallery').addEventListener('click', function(e){
+    const thumb = e.target.closest('img');
+    if(!thumb) return;
+    document.getElementById('detailGallery').querySelectorAll('img').forEach(function(t){ t.classList.remove('active'); });
+    thumb.classList.add('active');
+    document.getElementById('detailHeroImg').src = thumb.dataset.src;
+    document.getElementById('detailHeroImg').style.display = 'block';
+  });
+
+  function buildShareText(){
+    if(!currentTier) return '';
+    return currentDestinationFull + ' — ' + currentTier.label + '\n' +
+      currentNights + ' nuits · ' + currentTravelers + ' voyageur(s)\n' +
+      'Hôtel : ' + currentTier.hotel.name + ' (~' + currentTier.hotel.pricePerNight + '€/nuit)\n' +
+      'Activités : ' + currentTier.activities.join(', ') + '\n' +
+      'Restaurants : ' + currentTier.restaurants.join(', ') + '\n' +
+      'Total estimé : ' + currentTier.estimatedTotal + '€\n\n' +
+      'Composé sur Dérive — ' + bookingUrl(currentDestinationFull);
+  }
+
+  document.getElementById('detailShareBtn').addEventListener('click', async function(){
+    const text = buildShareText();
+    if(!text) return;
+    if(navigator.share){
+      try{ await navigator.share({ title: 'Mon séjour ' + currentDestinationFull, text: text }); return; }
+      catch(_e){ /* annulé ou non supporté, on retombe sur le presse-papiers */ }
+    }
+    try{
+      await navigator.clipboard.writeText(text);
+      shareConfirm.textContent = 'Récapitulatif copié dans le presse-papiers ✓';
+    }catch(_e){
+      shareConfirm.textContent = 'Copie automatique indisponible — sélectionnez le texte manuellement.';
+    }
+    setTimeout(function(){ shareConfirm.textContent = ''; }, 4000);
+  });
+
+  document.getElementById('detailExportBtn').addEventListener('click', function(){
+    const text = buildShareText();
+    if(!text) return;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'derive-' + (currentDestinationFull||'sejour').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.txt';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  });
+
+  renderSavedTrips();
+  renderHistory();
+  updateHint();
+})();
+</script>
+
+</body>
+</html>
