@@ -168,7 +168,7 @@ app.post('/api/day-plan', async (req, res) => {
 
     const systemPrompt =
       'Tu composes un déroulé jour par jour pour un séjour déjà choisi. Réponds UNIQUEMENT en JSON valide, sans texte autour, schéma :\n' + schema +
-      `\nGénère exactement ${dayCount} jours détaillés. Intègre naturellement l'hôtel, les activités et les restaurants fournis, sans tout répéter chaque jour. Chaque "text" doit tenir en une phrase courte (12 mots maximum). N'utilise jamais de guillemets doubles (") à l'intérieur d'un texte.` +
+      `\nGénère exactement ${dayCount} jours détaillés. Intègre l'hôtel, les activités et les restaurants fournis. IMPÉRATIF : chacune des activités listées ci-dessous doit apparaître au moins une fois dans le programme, sans exception — n'en oublie aucune, même si tu ajoutes aussi des créneaux libres ou des repas non listés autour. Chaque "text" doit tenir en une phrase courte (12 mots maximum). N'utilise jamais de guillemets doubles (") à l'intérieur d'un texte.` +
       (remainingNights > 0
         ? ` Le séjour compte ${nights} nuits au total : au-delà des ${dayCount} jours détaillés, remplis "remainingSummary" par 2-3 phrases courtes suggérant un rythme pour les ${remainingNights} nuits restantes, sans inventer un programme heure par heure.`
         : '');
@@ -177,9 +177,39 @@ app.post('/api/day-plan', async (req, res) => {
       `Destination : ${destinationFull}. Formule : ${tier.label}. Hôtel : ${tier.hotel.name}. ` +
       `Activités disponibles : ${tier.activities.join(', ')}. Restaurants disponibles : ${tier.restaurants.join(', ')}.`;
 
-    const clean = await askClaude(systemPrompt, userMsg, 2400);
-    const parsed = parseJsonLenient(clean);
+    // Verify every listed activity actually made it into the schedule — a
+    // model that's "integrating naturally" can still quietly drop one,
+    // especially the most recently added one. One targeted retry, explicitly
+    // naming what's missing, is cheap insurance against that.
+    function findMissingActivities(days, activities) {
+      const combined = (days || [])
+        .flatMap(d => (d.slots || []).map(s => s.text || ''))
+        .join(' ')
+        .toLowerCase();
+      return activities.filter(act => {
+        const keyword = act.toLowerCase().split(/\s+/).filter(w => w.length > 3).slice(-2).join(' ') || act.toLowerCase();
+        return !combined.includes(keyword) && !combined.includes(act.toLowerCase());
+      });
+    }
+
+    let clean = await askClaude(systemPrompt, userMsg, 2400);
+    let parsed = parseJsonLenient(clean);
     if (!parsed.days || !parsed.days.length) throw new Error('Plan vide');
+
+    let missing = findMissingActivities(parsed.days, tier.activities);
+    if (missing.length) {
+      console.warn('Activités manquantes au 1er essai, nouvelle tentative :', missing);
+      const retryUserMsg = userMsg + ` ATTENTION : dans un essai précédent, ces activités avaient été oubliées : ${missing.join(', ')}. Cette fois, assure-toi qu'elles apparaissent explicitement dans un créneau.`;
+      try {
+        const retryClean = await askClaude(systemPrompt, retryUserMsg, 2400);
+        const retryParsed = parseJsonLenient(retryClean);
+        if (retryParsed.days && retryParsed.days.length) {
+          const stillMissing = findMissingActivities(retryParsed.days, tier.activities);
+          if (stillMissing.length < missing.length) { parsed = retryParsed; missing = stillMissing; }
+        }
+      } catch (_e) { /* keep the first attempt if the retry itself fails */ }
+    }
+
     res.json({ days: parsed.days, remainingNights, remainingSummary: parsed.remainingSummary || null });
   } catch (err) {
     console.error(err);
