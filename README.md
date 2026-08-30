@@ -1,4 +1,4 @@
-# Dérive — serveur
+# Peacetrip — serveur
 
 Le backend qui rend le prototype claude.ai utilisable partout : il tient la
 clé API Anthropic côté serveur (jamais dans le navigateur), stocke les
@@ -75,7 +75,7 @@ base SQLite repart de zéro à chaque déploiement.
 cd derive-server
 git init
 git add .
-git commit -m "Premier commit du serveur Dérive"
+git commit -m "Premier commit du serveur Peacetrip"
 ```
 
 Puis crée un dépôt vide sur https://github.com/new (ne coche PAS "ajouter un

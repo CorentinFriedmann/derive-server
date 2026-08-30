@@ -115,7 +115,7 @@ app.post('/api/generate', async (req, res) => {
       '{"key":"high","label":"Signature","hotel":{"name":"...","pricePerNight":0},"activities":["...","...","...","..."],"restaurants":["...","...","..."],"estimatedTotal":0}';
 
     const systemPrompt =
-      'Tu es le moteur de génération de séjours du site de voyage "Dérive". Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans balises markdown. Schéma exact :\n' +
+      'Tu es le moteur de génération de séjours du site de voyage "Peacetrip". Réponds UNIQUEMENT avec un objet JSON valide, sans texte avant ni après, sans balises markdown. Schéma exact :\n' +
       '{"destinations":[{"destination":"Nom du lieu 1","country":"Pays","tiers":[' + tierSchema + ']},' +
       '{"destination":"Nom du lieu 2","country":"Pays","tiers":[' + tierSchema + ']},' +
       '{"destination":"Nom du lieu 3","country":"Pays","tiers":[' + tierSchema + ']}]}' +
@@ -336,4 +336,4 @@ app.post('/api/history', (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Dérive écoute sur http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Peacetrip écoute sur http://localhost:${PORT}`));
