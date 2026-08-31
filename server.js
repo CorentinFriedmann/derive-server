@@ -67,6 +67,15 @@ function identityFrom(req, bodyOrQuery) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// Appended to the system prompts of /api/generate, /api/day-plan and
+// /api/refine so the AI-generated content matches the frontend language
+// (see public/i18n.js — `lang` travels with every one of those calls).
+// The JSON schema's KEY names never change, only the text VALUES do.
+function langDirective(lang) {
+  if (lang !== 'en') return '';
+  return ' IMPORTANT — respond entirely in English: every text VALUE (destination and country names, tier labels — e.g. "Essential"/"Comfort"/"Signature" instead of "Essentiel"/"Confort"/"Signature" —, hotel/activity/restaurant names, day titles and descriptions) must be in English. Only the JSON key names stay exactly as given in the schema.';
+}
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 20,
@@ -132,7 +141,7 @@ app.get('/api/auth/me', (req, res) => {
 
 app.post('/api/generate', async (req, res) => {
   try {
-    const { promptText, budgetLabel, nights, travelers, excludeDestinations, tags } = req.body || {};
+    const { promptText, budgetLabel, nights, travelers, excludeDestinations, tags, lang } = req.body || {};
     if (!promptText || !nights || !travelers) {
       return res.status(400).json({ error: 'promptText, nights et travelers sont requis.' });
     }
@@ -150,7 +159,8 @@ app.post('/api/generate', async (req, res) => {
       '\nPropose 3 destinations réelles et VRAIMENT DIFFÉRENTES les unes des autres (pays ou ambiance distincts), toutes adaptées à la demande, chacune avec ses 3 formules. Utilise des noms d\'hôtels/activités/restaurants réalistes pour chaque lieu. Prix en euros pour le nombre de voyageurs indiqué. Le niveau Essentiel doit être nettement moins cher que Signature, pour chaque destination. Reste très concis : chaque nom d\'activité ou de restaurant tient en 2 à 5 mots, pas de phrases descriptives. N\'utilise JAMAIS de guillemets doubles (") à l\'intérieur d\'un nom ou d\'un texte — cela casserait le JSON ; utilise des guillemets simples ou reformule sans guillemets.' +
       (excludeDestinations && excludeDestinations.length
         ? (' Ne propose aucune de ces destinations déjà vues : ' + excludeDestinations.join(', ') + ' — choisis 3 destinations différentes adaptées à la même envie.')
-        : '');
+        : '') +
+      langDirective(lang);
 
     const userMsg =
       `Demande du voyageur : "${promptText}${tags && tags.length ? ' (' + tags.join(', ') + ')' : ''}". ` +
@@ -183,7 +193,7 @@ app.post('/api/generate', async (req, res) => {
 
 app.post('/api/day-plan', async (req, res) => {
   try {
-    const { destinationFull, tier, nights } = req.body || {};
+    const { destinationFull, tier, nights, lang } = req.body || {};
     if (!destinationFull || !tier || !nights) {
       return res.status(400).json({ error: 'destinationFull, tier et nights sont requis.' });
     }
@@ -199,7 +209,8 @@ app.post('/api/day-plan', async (req, res) => {
       `\nGénère exactement ${dayCount} jours détaillés. Intègre l'hôtel, les activités et les restaurants fournis. IMPÉRATIF : chacune des activités listées ci-dessous doit apparaître au moins une fois dans le programme, sans exception — n'en oublie aucune, même si tu ajoutes aussi des créneaux libres ou des repas non listés autour. Chaque "text" doit tenir en une phrase courte (12 mots maximum). N'utilise jamais de guillemets doubles (") à l'intérieur d'un texte.` +
       (remainingNights > 0
         ? ` Le séjour compte ${nights} nuits au total : au-delà des ${dayCount} jours détaillés, remplis "remainingSummary" par 2-3 phrases courtes suggérant un rythme pour les ${remainingNights} nuits restantes, sans inventer un programme heure par heure.`
-        : '');
+        : '') +
+      (lang === 'en' ? ' IMPORTANT — respond entirely in English: day titles and every "text"/"remainingSummary" value must be in English (e.g. use "Morning"/"Afternoon"/"Evening" instead of "Matin"/"Après-midi"/"Soir" for the "time" field). Only the JSON key names stay as given in the schema.' : '');
 
     const userMsg =
       `Destination : ${destinationFull}. Formule : ${tier.label}. Hôtel : ${tier.hotel.name}. ` +
@@ -252,7 +263,7 @@ app.post('/api/day-plan', async (req, res) => {
 
 app.post('/api/refine', async (req, res) => {
   try {
-    const { destination, country, tier, instruction, nights, travelers } = req.body || {};
+    const { destination, country, tier, instruction, nights, travelers, lang } = req.body || {};
     if (!destination || !tier || !instruction) {
       return res.status(400).json({ error: 'destination, tier et instruction sont requis.' });
     }
@@ -260,7 +271,8 @@ app.post('/api/refine', async (req, res) => {
     const systemPrompt =
       'Tu ajustes UNE formule déjà existante d\'un séjour, à la demande du voyageur. Réponds UNIQUEMENT en JSON valide, sans texte autour, avec ce schéma exact :\n' +
       `{"key":"${tier.key}","label":"${tier.label}","hotel":{"name":"...","pricePerNight":0},"activities":["..."],"restaurants":["..."],"estimatedTotal":0}\n` +
-      'Ne change PAS la destination. Ne change l\'hôtel que si la demande le dit explicitement — sinon garde le même. Pars de la formule actuelle fournie et modifie seulement ce que le voyageur demande, garde le reste identique autant que possible. Le nombre d\'activités et de restaurants doit rester cohérent avec la formule (Essentiel: 2 activités/1 restaurant, Confort: 3/2, Signature: 4/3), sauf si la demande dit explicitement d\'en ajouter ou d\'en enlever. Reste concis (2 à 5 mots par activité/restaurant), pas de phrases. N\'utilise jamais de guillemets doubles (") à l\'intérieur d\'un texte.';
+      'Ne change PAS la destination. Ne change l\'hôtel que si la demande le dit explicitement — sinon garde le même. Pars de la formule actuelle fournie et modifie seulement ce que le voyageur demande, garde le reste identique autant que possible. Le nombre d\'activités et de restaurants doit rester cohérent avec la formule (Essentiel: 2 activités/1 restaurant, Confort: 3/2, Signature: 4/3), sauf si la demande dit explicitement d\'en ajouter ou d\'en enlever. Reste concis (2 à 5 mots par activité/restaurant), pas de phrases. N\'utilise jamais de guillemets doubles (") à l\'intérieur d\'un texte.' +
+      (lang === 'en' ? ' IMPORTANT — respond entirely in English: "label", hotel/activity/restaurant names must be in English. Only the JSON key names stay as given in the schema.' : '');
 
     const userMsg =
       `Destination : ${destination}${country ? ', ' + country : ''}. Nuits : ${nights}, voyageurs : ${travelers}. ` +
@@ -384,35 +396,50 @@ function escapeHtmlForEmail(s) {
   ));
 }
 
-function buildItineraryEmailHtml({ destinationFull, tier, nights, travelers }) {
+const EMAIL_STRINGS = {
+  fr: { totalNote: 'total estimé', activities: 'Activités', restaurants: 'Tables suggérées',
+        nightsWord: 'nuits', travelerWord: 'voyageur', hotelLabel: 'Hôtel',
+        footer: 'Itinéraire indicatif — à confirmer sur chaque plateforme de réservation. Envoyé depuis Peacetrip.',
+        subject: (dest, label) => `Votre itinéraire ${dest} — ${label}` },
+  en: { totalNote: 'total estimate', activities: 'Activities', restaurants: 'Suggested restaurants',
+        nightsWord: 'nights', travelerWord: 'traveler', hotelLabel: 'Hotel',
+        footer: 'Indicative itinerary — confirm on each booking platform. Sent from Peacetrip.',
+        subject: (dest, label) => `Your ${dest} itinerary — ${label}` }
+};
+
+function buildItineraryEmailHtml({ destinationFull, tier, nights, travelers, lang }) {
+  const s = EMAIL_STRINGS[lang === 'en' ? 'en' : 'fr'];
   const restaurantNames = (tier.restaurants || []).map(r => (typeof r === 'string' ? r : r.name));
   const list = items => items.map(i => '<li style="margin-bottom:4px;">' + escapeHtmlForEmail(i) + '</li>').join('');
+  const priceUnit = lang === 'en' ? `$${tier.hotel.pricePerNight}` : `${tier.hotel.pricePerNight}€`;
+  const totalUnit = lang === 'en' ? `$${tier.estimatedTotal}` : `${tier.estimatedTotal}€`;
   return `
     <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#0E2A3D;">
       <p style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5C7C93;margin:0 0 6px;">Peacetrip · ${escapeHtmlForEmail(tier.label)}</p>
       <h1 style="font-size:26px;margin:0 0 6px;">${escapeHtmlForEmail(destinationFull)}</h1>
-      <p style="font-family:Arial,sans-serif;font-size:14px;color:#5C7C93;margin:0 0 20px;">${nights} nuits · ${travelers} voyageur${travelers > 1 ? 's' : ''} · Hôtel : ${escapeHtmlForEmail(tier.hotel.name)} (~${tier.hotel.pricePerNight}€/nuit)</p>
-      <p style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;margin:0 0 24px;">${tier.estimatedTotal}€ <span style="font-size:13px;font-weight:normal;color:#5C7C93;">total estimé</span></p>
-      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">Activités</p>
+      <p style="font-family:Arial,sans-serif;font-size:14px;color:#5C7C93;margin:0 0 20px;">${nights} ${s.nightsWord} · ${travelers} ${s.travelerWord}${travelers > 1 ? 's' : ''} · ${s.hotelLabel}: ${escapeHtmlForEmail(tier.hotel.name)} (~${priceUnit}/${lang === 'en' ? 'night' : 'nuit'})</p>
+      <p style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;margin:0 0 24px;">${totalUnit} <span style="font-size:13px;font-weight:normal;color:#5C7C93;">${s.totalNote}</span></p>
+      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">${s.activities}</p>
       <ul style="font-family:Arial,sans-serif;font-size:14px;padding-left:18px;margin:0 0 20px;">${list(tier.activities || [])}</ul>
-      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">Tables suggérées</p>
+      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">${s.restaurants}</p>
       <ul style="font-family:Arial,sans-serif;font-size:14px;padding-left:18px;margin:0 0 24px;">${list(restaurantNames)}</ul>
-      <p style="font-family:Arial,sans-serif;font-size:12px;color:#8FA8BA;">Itinéraire indicatif — à confirmer sur chaque plateforme de réservation. Envoyé depuis Peacetrip.</p>
+      <p style="font-family:Arial,sans-serif;font-size:12px;color:#8FA8BA;">${s.footer}</p>
     </div>
   `;
 }
 
 app.post('/api/email-itinerary', emailLimiter, async (req, res) => {
   try {
-    const { email: rawEmail, destinationFull, tier, nights, travelers, marketingConsent } = req.body || {};
+    const { email: rawEmail, destinationFull, tier, nights, travelers, marketingConsent, lang } = req.body || {};
     const email = String(rawEmail || '').trim().toLowerCase();
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Adresse email invalide.' });
     if (!destinationFull || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
 
+    const s = EMAIL_STRINGS[lang === 'en' ? 'en' : 'fr'];
     await sendEmail({
       to: email,
-      subject: `Votre itinéraire ${destinationFull} — ${tier.label}`,
-      html: buildItineraryEmailHtml({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1 })
+      subject: s.subject(destinationFull, tier.label),
+      html: buildItineraryEmailHtml({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1, lang })
     });
 
     db.insertEmailCapture(email, destinationFull, !!marketingConsent);

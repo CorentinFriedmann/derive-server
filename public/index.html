@@ -8,25 +8,27 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,560;0,9..144,680;1,9..144,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/styles.css">
+<script src="/i18n.js"></script>
 </head>
 <body>
 
 <nav>
   <div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M58 6 C 46 10 36 16 30 22 C 26 18 18 14 8 12 C 16 18 22 22 26 26 C 20 27 12 26 4 22 C 12 30 22 34 30 32 C 24 36 16 38 6 36 C 18 40 32 40 42 32 C 50 26 56 16 58 6 Z"/></svg>Peacetrip</div>
   <div class="nav-links">
-    <a href="#panel">Composer</a>
-    <a href="#saved">Mes voyages <span class="nav-badge" id="savedCount">0</span></a>
-    <a href="#how">Comment ça marche</a>
-    <span id="navAuthSlot"><button class="nav-auth" id="navAuthBtn" type="button">Se connecter</button></span>
+    <a href="#panel" data-i18n="navComposer">Composer</a>
+    <a href="#saved" data-i18n="navSaved">Mes voyages</a> <span class="nav-badge" id="savedCount">0</span>
+    <a href="#how" data-i18n="navHow">Comment ça marche</a>
+    <button class="nav-auth" id="langToggleBtn" type="button" data-i18n-aria="langToggleAria">EN</button>
+    <span id="navAuthSlot"><button class="nav-auth" id="navAuthBtn" type="button" data-i18n="navLogin">Se connecter</button></span>
   </div>
 </nav>
 
 <div class="hero wrap">
   <div class="hero-grid">
     <div>
-      <div class="eyebrow">Séjours composés à la demande — par IA</div>
-      <h1>Décrivez le voyage <em>que vous n'avez pas</em><br>encore trouvé les mots pour chercher.</h1>
-      <p class="lede">Un mood, un budget, une ambiance — une phrase suffit. Peacetrip interroge Claude pour composer l'itinéraire, détaille chaque jour, et vous envoie réserver sur les vrais sites partenaires.</p>
+      <div class="eyebrow" data-i18n="heroEyebrow">Séjours composés à la demande — par IA</div>
+      <h1 id="heroH1">Décrivez le voyage <em>que vous n'avez pas</em><br>encore trouvé les mots pour chercher.</h1>
+      <p class="lede" data-i18n="heroLede">Un mood, un budget, une ambiance — une phrase suffit. Peacetrip interroge Claude pour composer l'itinéraire, détaille chaque jour, et vous envoie réserver sur les vrais sites partenaires.</p>
     </div>
     <div class="chart" aria-hidden="true">
       <svg viewBox="0 0 400 400">
@@ -48,52 +50,52 @@
 
 <div class="wrap" id="panel">
   <div class="panel">
-    <div class="panel-label">Racontez votre envie</div>
+    <div class="panel-label" data-i18n="panelLabel">Racontez votre envie</div>
 
     <div class="history-row" id="historyRow">
-      <div class="history-row-label">Recherches récentes</div>
+      <div class="history-row-label" data-i18n="recentSearches">Recherches récentes</div>
     </div>
 
-    <textarea id="promptInput" placeholder="Ex. Une semaine au calme au bord de la mer, ambiance romantique, on aime bien manger, budget confortable…"></textarea>
+    <textarea id="promptInput" data-i18n-placeholder="promptPlaceholder" placeholder="Ex. Une semaine au calme au bord de la mer, ambiance romantique, on aime bien manger, budget confortable…"></textarea>
 
     <div class="chips" id="chips">
-      <button class="chip" data-tag="plage">Plage</button>
-      <button class="chip" data-tag="montagne">Montagne</button>
-      <button class="chip" data-tag="ville">Ville</button>
-      <button class="chip" data-tag="aventure">Aventure</button>
-      <button class="chip" data-tag="romantique">Romantique</button>
-      <button class="chip" data-tag="famille">Famille</button>
-      <button class="chip" data-tag="culture">Culture</button>
+      <button class="chip" data-tag="beach" data-i18n="chipBeach">Plage</button>
+      <button class="chip" data-tag="mountain" data-i18n="chipMountain">Montagne</button>
+      <button class="chip" data-tag="city" data-i18n="chipCity">Ville</button>
+      <button class="chip" data-tag="adventure" data-i18n="chipAdventure">Aventure</button>
+      <button class="chip" data-tag="romantic" data-i18n="chipRomantic">Romantique</button>
+      <button class="chip" data-tag="family" data-i18n="chipFamily">Famille</button>
+      <button class="chip" data-tag="culture" data-i18n="chipCulture">Culture</button>
     </div>
 
     <div class="row-split">
       <div class="budget-row" id="budgetRow">
-        <div class="budget" data-label="Économique">Économique<span>≈ 700–900€</span></div>
-        <div class="budget on" data-label="Confort">Confort<span>≈ 1100–1500€</span></div>
-        <div class="budget" data-label="Signature">Signature<span>≈ 2000€ et +</span></div>
+        <div class="budget" data-budget="low"><span class="budget-label" data-i18n="budgetLow">Économique</span><span class="budget-range" data-i18n="budgetLowRange">≈ 700–900€</span></div>
+        <div class="budget on" data-budget="mid"><span class="budget-label" data-i18n="budgetMid">Confort</span><span class="budget-range" data-i18n="budgetMidRange">≈ 1100–1500€</span></div>
+        <div class="budget" data-budget="high"><span class="budget-label" data-i18n="budgetHigh">Signature</span><span class="budget-range" data-i18n="budgetHighRange">≈ 2000€ et +</span></div>
       </div>
       <div class="steppers">
         <div class="stepper">
-          <div class="stepper-label">Voyageurs</div>
+          <div class="stepper-label" data-i18n="travelersLabel">Voyageurs</div>
           <div class="stepper-ctrl">
-            <button type="button" id="travMinus" aria-label="Moins de voyageurs">−</button>
+            <button type="button" id="travMinus" data-i18n-aria="lessTravelers" aria-label="Moins de voyageurs">−</button>
             <span class="val" id="travVal">2</span>
-            <button type="button" id="travPlus" aria-label="Plus de voyageurs">+</button>
+            <button type="button" id="travPlus" data-i18n-aria="moreTravelers" aria-label="Plus de voyageurs">+</button>
           </div>
         </div>
         <div class="stepper">
-          <div class="stepper-label">Nuits</div>
+          <div class="stepper-label" data-i18n="nightsLabel">Nuits</div>
           <div class="stepper-ctrl">
-            <button type="button" id="nightMinus" aria-label="Moins de nuits">−</button>
+            <button type="button" id="nightMinus" data-i18n-aria="lessNights" aria-label="Moins de nuits">−</button>
             <span class="val" id="nightVal">6</span>
-            <button type="button" id="nightPlus" aria-label="Plus de nuits">+</button>
+            <button type="button" id="nightPlus" data-i18n-aria="moreNights" aria-label="Plus de nuits">+</button>
           </div>
         </div>
       </div>
     </div>
 
     <div class="go-row">
-      <button class="go" id="goBtn">Tracer mon itinéraire</button>
+      <button class="go" id="goBtn" data-i18n="goBtn">Tracer mon itinéraire</button>
       <span class="go-hint" id="goHint">/ pour 2 personnes, 6 nuits</span>
       <div class="error-msg" id="errorMsg"></div>
     </div>
@@ -102,12 +104,12 @@
 
 <div class="wrap" id="results">
   <div class="results-head">
-    <div class="eyebrow">Itinéraire tracé</div>
-    <h2 id="resultTitle">Trois façons de vivre ce voyage</h2>
-    <p id="resultSub">Même destination, trois niveaux d'expérience. Choisissez, on s'occupe du reste.</p>
+    <div class="eyebrow" data-i18n="resultsEyebrow">Itinéraire tracé</div>
+    <h2 id="resultTitle" data-i18n="resultTitleDefault">Trois façons de vivre ce voyage</h2>
+    <p id="resultSub" data-i18n="resultSubDefault">Même destination, trois niveaux d'expérience. Choisissez, on s'occupe du reste.</p>
     <div class="source-row">
       <span class="source-tag" id="sourceTag"></span>
-      <button class="view-toggle" id="viewToggleBtn" type="button">Comparer</button>
+      <button class="view-toggle" id="viewToggleBtn" type="button" data-i18n="compareBtn">Comparer</button>
     </div>
   </div>
   <div class="cards" id="cards"></div>
@@ -115,63 +117,63 @@
     <table class="compare-table" id="compareTable"></table>
   </div>
   <div class="regen-row">
-    <button class="regen-link" id="regenBtn">Cette destination ne vous tente pas ? Proposer autre chose →</button>
+    <button class="regen-link" id="regenBtn" data-i18n="regenLink">Cette destination ne vous tente pas ? Proposer autre chose →</button>
   </div>
 </div>
 
 <div class="wrap saved-section" id="saved">
-  <h2>Mes voyages sauvegardés</h2>
-  <p class="sub">Enregistrés dans ce navigateur — cliquez l'étoile sur une formule pour la garder ici.</p>
-  <div id="savedList"><div class="saved-empty">Aucun séjour sauvegardé pour l’instant.</div></div>
+  <h2 data-i18n="savedHeading">Mes voyages sauvegardés</h2>
+  <p class="sub" data-i18n="savedSub">Enregistrés dans ce navigateur — cliquez l'étoile sur une formule pour la garder ici.</p>
+  <div id="savedList"><div class="saved-empty" data-i18n="savedEmpty">Aucun séjour sauvegardé pour l’instant.</div></div>
 </div>
 
 <div class="wrap how" id="how">
-  <h2>De la phrase à la valise, en trois temps.</h2>
+  <h2 data-i18n="howHeading">De la phrase à la valise, en trois temps.</h2>
   <div class="waypoints">
-    <div class="wp"><div class="wp-marker">01</div><h4>Vous décrivez</h4><p>Style, ambiance, budget, voyageurs et nuits — ajustables librement.</p></div>
-    <div class="wp"><div class="wp-marker">02</div><h4>Claude compose</h4><p>Destination, hôtel, activités, tables — puis un déroulé jour par jour à la demande.</p></div>
-    <div class="wp"><div class="wp-marker">03</div><h4>Vous réservez ailleurs</h4><p>Chaque élément s'ouvre sur le vrai site du partenaire pour finaliser au prix réel.</p></div>
+    <div class="wp"><div class="wp-marker">01</div><h4 data-i18n="step1Title">Vous décrivez</h4><p data-i18n="step1Text">Style, ambiance, budget, voyageurs et nuits — ajustables librement.</p></div>
+    <div class="wp"><div class="wp-marker">02</div><h4 data-i18n="step2Title">Claude compose</h4><p data-i18n="step2Text">Destination, hôtel, activités, tables — puis un déroulé jour par jour à la demande.</p></div>
+    <div class="wp"><div class="wp-marker">03</div><h4 data-i18n="step3Title">Vous réservez ailleurs</h4><p data-i18n="step3Text">Chaque élément s'ouvre sur le vrai site du partenaire pour finaliser au prix réel.</p></div>
   </div>
 </div>
 
 <div class="wrap honesty" id="honesty">
   <div class="honesty-box">
-    <h4>Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
-    <p><strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.</p>
-    <p><strong>Compte :</strong> créer un compte (email + mot de passe) est optionnel — sans compte, vos séjours et votre historique restent liés à cet identifiant de navigateur, et vous les perdez si vous videz les données du navigateur ou changez d'appareil. Avec un compte, vos séjours déjà sauvegardés dans ce navigateur sont automatiquement rattachés à votre compte, et retrouvables en vous reconnectant depuis n'importe quel appareil. Les mots de passe sont hashés (jamais stockés en clair) ; il n'y a pas encore de récupération de mot de passe oublié ni de connexion via Google/autre.</p>
-    <p><strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) demanderait de stocker l'itinéraire à une adresse dédiée — pas encore construit.</p>
-    <p><strong>Email :</strong> le bouton "Recevoir cet itinéraire par email" envoie un vrai email (récapitulatif de la formule) à l'adresse indiquée. Cette adresse est conservée pour pouvoir vous recontacter à ce sujet ; la case à cocher (décochée par défaut) est le seul cas où vous acceptez aussi de recevoir occasionnellement d'autres idées de voyage — il n'y a pas encore de newsletter automatique, ni de désinscription en un clic.</p>
-    <p><strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
+    <h4 data-i18n="honestyHeading">Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
+    <p data-i18n-html="honestyReal"><strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.</p>
+    <p data-i18n-html="honestyAccount"><strong>Compte :</strong> créer un compte (email + mot de passe) est optionnel — sans compte, vos séjours et votre historique restent liés à cet identifiant de navigateur, et vous les perdez si vous videz les données du navigateur ou changez d'appareil. Avec un compte, vos séjours déjà sauvegardés dans ce navigateur sont automatiquement rattachés à votre compte, et retrouvables en vous reconnectant depuis n'importe quel appareil. Les mots de passe sont hashés (jamais stockés en clair) ; il n'y a pas encore de récupération de mot de passe oublié ni de connexion via Google/autre.</p>
+    <p data-i18n-html="honestyShare"><strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) demanderait de stocker l'itinéraire à une adresse dédiée — pas encore construit.</p>
+    <p data-i18n-html="honestyEmail"><strong>Email :</strong> le bouton "Recevoir cet itinéraire par email" envoie un vrai email (récapitulatif de la formule) à l'adresse indiquée. Cette adresse est conservée pour pouvoir vous recontacter à ce sujet ; la case à cocher (décochée par défaut) est le seul cas où vous acceptez aussi de recevoir occasionnellement d'autres idées de voyage — il n'y a pas encore de newsletter automatique, ni de désinscription en un clic.</p>
+    <p data-i18n-html="honestyBuildMore"><strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
   </div>
 </div>
 
 <footer class="wrap">
   <div class="foot-brand">Peacetrip</div>
-  <div class="foot-note">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
+  <div class="foot-note" data-i18n="footNote">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
 </footer>
 
 <!-- AUTH MODAL -->
 <div class="auth-overlay" id="authOverlay">
   <div class="auth-panel">
-    <button class="detail-close" id="authClose" aria-label="Fermer la connexion">×</button>
+    <button class="detail-close" id="authClose" data-i18n-aria="closeLoginAria" aria-label="Fermer la connexion">×</button>
     <div class="auth-tabs">
-      <button class="auth-tab active" type="button" data-tab="login">Connexion</button>
-      <button class="auth-tab" type="button" data-tab="signup">Créer un compte</button>
+      <button class="auth-tab active" type="button" data-tab="login" data-i18n="authTabLogin">Connexion</button>
+      <button class="auth-tab" type="button" data-tab="signup" data-i18n="authTabSignup">Créer un compte</button>
     </div>
     <form id="authForm">
-      <label>Email<input type="email" id="authEmail" autocomplete="email" required></label>
-      <label>Mot de passe<input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
-      <button type="submit" class="go" id="authSubmit">Se connecter</button>
+      <label><span data-i18n="authEmailLabel">Email</span><input type="email" id="authEmail" autocomplete="email" required></label>
+      <label><span data-i18n="authPasswordLabel">Mot de passe</span><input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
+      <button type="submit" class="go" id="authSubmit" data-i18n="authSubmitLogin">Se connecter</button>
       <div class="auth-msg" id="authMsg" role="status"></div>
     </form>
-    <p class="auth-note">Un compte est optionnel — sans compte, vos séjours restent enregistrés dans ce navigateur seulement.</p>
+    <p class="auth-note" data-i18n="authNote">Un compte est optionnel — sans compte, vos séjours restent enregistrés dans ce navigateur seulement.</p>
   </div>
 </div>
 
 <!-- DETAIL OVERLAY -->
 <div class="detail-overlay" id="detailOverlay">
   <div class="detail-panel">
-    <button class="detail-close" id="detailClose" aria-label="Fermer le détail">×</button>
+    <button class="detail-close" id="detailClose" data-i18n-aria="closeDetailAria" aria-label="Fermer le détail">×</button>
     <div class="detail-hero">
       <img id="detailHeroImg" alt="" style="display:none;">
       <div class="detail-hero-overlay">
@@ -184,23 +186,23 @@
     <div class="detail-body">
       <div class="detail-days">
         <div class="day-tabs" id="dayTabs"></div>
-        <div id="dayPanels"><div class="day-loading">Claude compose le déroulé jour par jour…</div></div>
+        <div id="dayPanels"><div class="day-loading" data-i18n="dayComposing">Claude compose le déroulé jour par jour…</div></div>
       </div>
       <aside class="detail-side">
         <div class="detail-price" id="detailPrice"></div>
         <div class="detail-price-note" id="detailPriceNote"></div>
-        <a class="book-btn" id="detailBookBtn" target="_blank" rel="noopener">Réserver l'hôtel sur Booking.com</a>
-        <a class="book-btn secondary" id="detailFlightsBtn" target="_blank" rel="noopener">Chercher les vols</a>
-        <button class="book-btn ghost" id="detailShareBtn" type="button">Partager ce séjour</button>
-        <button class="book-btn ghost" id="detailExportBtn" type="button">Télécharger en .txt</button>
+        <a class="book-btn" id="detailBookBtn" target="_blank" rel="noopener" data-i18n="bookHotel">Réserver l'hôtel sur Booking.com</a>
+        <a class="book-btn secondary" id="detailFlightsBtn" target="_blank" rel="noopener" data-i18n="searchFlights">Chercher les vols</a>
+        <button class="book-btn ghost" id="detailShareBtn" type="button" data-i18n="shareBtn">Partager ce séjour</button>
+        <button class="book-btn ghost" id="detailExportBtn" type="button" data-i18n="downloadBtn">Télécharger en .txt</button>
         <div class="share-confirm" id="shareConfirm"></div>
 
         <div class="refine-box">
-          <button class="refine-toggle" type="button" id="emailToggleBtn">✉ Recevoir cet itinéraire par email</button>
+          <button class="refine-toggle" type="button" id="emailToggleBtn" data-i18n="emailToggleOpen">✉ Recevoir cet itinéraire par email</button>
           <div class="refine-panel" id="emailPanel" style="display:none;">
-            <input type="email" class="refine-input" id="emailInput" placeholder="vous@exemple.com" autocomplete="email">
-            <label class="email-consent"><input type="checkbox" id="emailConsent">Je veux aussi recevoir occasionnellement des idées de voyage par email</label>
-            <button class="book-btn ghost refine-submit" type="button" id="emailSubmitBtn">Envoyer</button>
+            <input type="email" class="refine-input" id="emailInput" data-i18n-placeholder="emailPlaceholder" placeholder="vous@exemple.com" autocomplete="email">
+            <label class="email-consent"><input type="checkbox" id="emailConsent"><span data-i18n="emailConsentLabel">Je veux aussi recevoir occasionnellement des idées de voyage par email</span></label>
+            <button class="book-btn ghost refine-submit" type="button" id="emailSubmitBtn" data-i18n="emailSendBtn">Envoyer</button>
             <div class="refine-msg" id="emailMsg"></div>
           </div>
         </div>
@@ -240,6 +242,74 @@
     return data;
   }
 
+  // --- i18n (FR/EN) --------------------------------------------------------
+  // Dictionary + t()/getLang()/setLang() come from i18n.js, loaded before
+  // this script. applyI18n() re-stamps every static string and re-renders
+  // whatever's currently on screen (cards, compare table, saved list,
+  // history) so a language switch never needs a page reload.
+  const langToggleBtn = document.getElementById('langToggleBtn');
+  let lastUsedFallback = false;
+
+  function applyI18n(){
+    const lang = window.getLang();
+    document.documentElement.lang = lang;
+    langToggleBtn.textContent = lang === 'fr' ? 'EN' : 'FR';
+    langToggleBtn.setAttribute('aria-label', t('langToggleAria'));
+
+    document.querySelectorAll('[data-i18n]').forEach(function(el){ el.textContent = t(el.dataset.i18n); });
+    document.querySelectorAll('[data-i18n-html]').forEach(function(el){ el.innerHTML = t(el.dataset.i18nHtml); });
+    document.querySelectorAll('[data-i18n-placeholder]').forEach(function(el){ el.placeholder = t(el.dataset.i18nPlaceholder); });
+    document.querySelectorAll('[data-i18n-aria]').forEach(function(el){ el.setAttribute('aria-label', t(el.dataset.i18nAria)); });
+
+    const heroH1 = document.getElementById('heroH1');
+    heroH1.innerHTML = t('heroH1Start') + '<em>' + t('heroH1Em') + '</em><br>' + t('heroH1End');
+
+    if(typeof updateHint === 'function') updateHint();
+    if(typeof renderAuthNav === 'function') renderAuthNav();
+    refreshDynamicContent();
+  }
+
+  // Re-renders whatever's already on screen with the new language, without
+  // any new network call — the data (currentItinerary, saved trips…) is
+  // already in memory or gets re-fetched from endpoints that don't care
+  // about UI language.
+  function refreshDynamicContent(){
+    const resultTitleEl = document.getElementById('resultTitle');
+    const resultSubEl = document.getElementById('resultSub');
+    if(currentItinerary && resultTitleEl.dataset.state === 'generated'){
+      const names = currentItinerary.destinations.map(function(d){ return d.destination; }).join(', ');
+      resultTitleEl.textContent = t('resultTitleGenerated');
+      resultSubEl.textContent = t('resultSubGenerated', { names: names });
+      sourceTag.textContent = lastUsedFallback ? t('sourceFallback') : t('sourceLive');
+    }
+
+    if(currentItinerary && cardsEl.children.length && typeof buildCard === 'function'){
+      const photoByIdx = {};
+      cardsEl.querySelectorAll('.card').forEach(function(cardEl){
+        const idx = cardEl.dataset.dest;
+        const img = cardEl.querySelector('.card-photo img');
+        photoByIdx[idx] = { tier: cardEl.dataset.tier, src: img ? img.getAttribute('src') : null };
+      });
+      cardsEl.innerHTML = currentItinerary.destinations.map(function(d, idx){
+        const savedTier = photoByIdx[idx] ? photoByIdx[idx].tier : d.tiers[0].key;
+        return buildCard(idx, d, savedTier, currentNights, currentTravelers);
+      }).join('');
+      cardsEl.querySelectorAll('.card').forEach(function(cardEl){
+        const idx = cardEl.dataset.dest;
+        const src = photoByIdx[idx] && photoByIdx[idx].src;
+        if(src){ cardEl.querySelector('.card-photo img').src = src; }
+      });
+    }
+    if(compareWrap.classList.contains('show') && typeof renderCompareTable === 'function') renderCompareTable();
+    if(typeof renderSavedTrips === 'function') renderSavedTrips();
+    if(typeof renderHistory === 'function') renderHistory();
+  }
+
+  langToggleBtn.addEventListener('click', function(){
+    window.setLang(window.getLang() === 'fr' ? 'en' : 'fr');
+    applyI18n();
+  });
+
   // --- Auth (optional account) -------------------------------------------
   // A logged-in user is identified server-side by an httpOnly cookie — we
   // never store the password or a token here, just a client-side mirror of
@@ -257,16 +327,16 @@
 
   function renderAuthNav(){
     if(currentUser){
-      navAuthSlot.innerHTML = '<span class="nav-auth-user"><span class="email">' + currentUser.email + '</span><button type="button" id="navLogoutBtn">Se déconnecter</button></span>';
+      navAuthSlot.innerHTML = '<span class="nav-auth-user"><span class="email">' + currentUser.email + '</span><button type="button" id="navLogoutBtn">' + t('navLogout') + '</button></span>';
     } else {
-      navAuthSlot.innerHTML = '<button class="nav-auth" id="navAuthBtn" type="button">Se connecter</button>';
+      navAuthSlot.innerHTML = '<button class="nav-auth" id="navAuthBtn" type="button">' + t('navLogin') + '</button>';
     }
   }
 
   function openAuth(mode){
     authMode = mode || 'login';
-    authTabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab === authMode); });
-    authSubmit.textContent = authMode === 'signup' ? 'Créer mon compte' : 'Se connecter';
+    authTabs.forEach(function(tabEl){ tabEl.classList.toggle('active', tabEl.dataset.tab === authMode); });
+    authSubmit.textContent = authMode === 'signup' ? t('authSubmitSignup') : t('authSubmitLogin');
     document.getElementById('authPassword').setAttribute('autocomplete', authMode === 'signup' ? 'new-password' : 'current-password');
     authMsg.textContent = ''; authMsg.className = 'auth-msg';
     authOverlay.classList.add('show');
@@ -303,7 +373,7 @@
       renderSavedTrips();
       renderHistory();
     }catch(err){
-      authMsg.textContent = err.message || 'Une erreur est survenue.';
+      authMsg.textContent = err.message || t('authGenericError');
       authMsg.className = 'auth-msg error';
     }finally{
       authSubmit.disabled = false;
@@ -324,26 +394,48 @@
   chipEls.forEach(function(c){
     c.addEventListener('click', function(){
       c.classList.toggle('on');
-      const t = c.dataset.tag;
-      activeTags.has(t) ? activeTags.delete(t) : activeTags.add(t);
+      const tag = c.dataset.tag;
+      activeTags.has(tag) ? activeTags.delete(tag) : activeTags.add(tag);
     });
   });
 
-  let budgetLabel = "Confort";
+  // Chip identifiers (data-tag) stay stable across languages so history
+  // matching keeps working after a language switch — only the words sent
+  // to Claude (and shown on the chip) get localized.
+  const TAG_I18N_KEY = {
+    beach: 'chipBeach', mountain: 'chipMountain', city: 'chipCity', adventure: 'chipAdventure',
+    romantic: 'chipRomantic', family: 'chipFamily', culture: 'chipCulture'
+  };
+  function localizedTags(){ return [...activeTags].map(function(tag){ return t(TAG_I18N_KEY[tag] || tag); }); }
+
+  let budgetKey = 'mid';
   const budgetEls = document.querySelectorAll('.budget');
   budgetEls.forEach(function(b){
     b.addEventListener('click', function(){
       budgetEls.forEach(function(x){ x.classList.remove('on'); });
       b.classList.add('on');
-      budgetLabel = b.dataset.label;
+      budgetKey = b.dataset.budget;
     });
   });
+
+  const BUDGET_I18N_KEY = { low: 'budgetLow', mid: 'budgetMid', high: 'budgetHigh' };
+  function budgetLabelFor(key){ return t(BUDGET_I18N_KEY[key] || BUDGET_I18N_KEY.mid); }
+  // History entries store whatever label text was current when they were
+  // saved, in whichever language was active then — check both dictionaries
+  // so restoring an old search still highlights the right budget pill.
+  function budgetKeyFromLabel(label){
+    for(const key in BUDGET_I18N_KEY){
+      const i18nKey = BUDGET_I18N_KEY[key];
+      if(window.I18N.fr[i18nKey] === label || window.I18N.en[i18nKey] === label) return key;
+    }
+    return 'mid';
+  }
 
   let travelers = 2, nights = 6;
   const travVal = document.getElementById('travVal');
   const nightVal = document.getElementById('nightVal');
   const goHint = document.getElementById('goHint');
-  function updateHint(){ goHint.textContent = "/ pour " + travelers + " personne" + (travelers>1?'s':'') + ", " + nights + " nuits"; }
+  function updateHint(){ goHint.textContent = t('goHint', { n: travelers, person: travelers>1 ? t('personPlural') : t('personSingular'), nights: nights }); }
   document.getElementById('travMinus').addEventListener('click', function(){ travelers=Math.max(1,travelers-1); travVal.textContent=travelers; updateHint(); });
   document.getElementById('travPlus').addEventListener('click', function(){ travelers=Math.min(8,travelers+1); travVal.textContent=travelers; updateHint(); });
   document.getElementById('nightMinus').addEventListener('click', function(){ nights=Math.max(2,nights-1); nightVal.textContent=nights; updateHint(); });
@@ -369,21 +461,44 @@
     ]
   };
 
+  // English mirror of the offline fallback above — shown when generation
+  // fails while the site is in English, so the demo destinations don't
+  // suddenly appear in French.
+  const fallbackEn = {
+    destinations: [
+      { destination:"The Bay of Naples", country:"Italy", tiers:[
+        {key:'low', label:'Essentials', hotel:{name:"Casa Marea", pricePerNight:90}, activities:["Boat trip to Capri","Sunset in Positano"], restaurants:["Trattoria da Peppino"], estimatedTotal:980},
+        {key:'mid', label:'Comfort', hotel:{name:"Villa Aurora", pricePerNight:165}, activities:["Boat trip to Capri","Neapolitan cooking class","Private tour of Pompeii"], restaurants:["Il Buco","La Terrazza Bosquet"], estimatedTotal:1560},
+        {key:'high', label:'Signature', hotel:{name:"Le Belvédère Sorrento", pricePerNight:320}, activities:["Private boat trip to Capri","Neapolitan cooking class","Private tour of Pompeii","Dinner on a palazzo terrace"], restaurants:["Il Buco","La Terrazza Bosquet","Ristorante Il Faro"], estimatedTotal:2890}
+      ]},
+      { destination:"The Calanques", country:"France", tiers:[
+        {key:'low', label:'Essentials', hotel:{name:"Auberge du Cap", pricePerNight:78}, activities:["Sugiton hike","Kayaking the coves"], restaurants:["Chez Fonfon"], estimatedTotal:870},
+        {key:'mid', label:'Comfort', hotel:{name:"Mas des Calanques", pricePerNight:145}, activities:["Sugiton hike","Kayaking the coves","Snorkeling"], restaurants:["Chez Fonfon","Le Rhul"], estimatedTotal:1380},
+        {key:'high', label:'Signature', hotel:{name:"Villa Sormiou Suites", pricePerNight:290}, activities:["Private Sugiton hike","Kayaking the coves","Snorkeling","Sunrise walk in the calanques"], restaurants:["Chez Fonfon","Le Rhul","La Table du Fenouil"], estimatedTotal:2560}
+      ]},
+      { destination:"Lisbon", country:"Portugal", tiers:[
+        {key:'low', label:'Essentials', hotel:{name:"Hostel Alfama Views", pricePerNight:65}, activities:["Tram 28 and Alfama on foot","Pastéis de nata tasting"], restaurants:["Time Out Market"], estimatedTotal:790},
+        {key:'mid', label:'Comfort', hotel:{name:"Boutique Bairro Alto", pricePerNight:135}, activities:["Tram 28 and Alfama on foot","Pastéis de nata tasting","Sintra day trip"], restaurants:["Time Out Market","Cervejaria Ramiro"], estimatedTotal:1340},
+        {key:'high', label:'Signature', hotel:{name:"Palácio das Artes", pricePerNight:280}, activities:["Tram 28 and Alfama on foot","Fado in a hidden bar","Private Sintra day trip","Pastéis de nata tasting"], restaurants:["Time Out Market","Cervejaria Ramiro","A Cevicheria"], estimatedTotal:2410}
+      ]}
+    ]
+  };
+
   async function callGenerate(promptText, nightsN, travelersN, excludeDestinations){
     return await callBackend('/generate', {
-      promptText: promptText, budgetLabel: budgetLabel, nights: nightsN, travelers: travelersN,
-      excludeDestinations: excludeDestinations || null, tags: [...activeTags]
+      promptText: promptText, budgetLabel: budgetLabelFor(budgetKey), nights: nightsN, travelers: travelersN,
+      excludeDestinations: excludeDestinations || null, tags: localizedTags(), lang: window.getLang()
     });
   }
 
   async function callDayPlan(destinationFull, tier, nightsN){
-    return await callBackend('/day-plan', { destinationFull: destinationFull, tier: tier, nights: nightsN });
+    return await callBackend('/day-plan', { destinationFull: destinationFull, tier: tier, nights: nightsN, lang: window.getLang() });
   }
 
   async function callRefine(destination, country, tier, instruction, nightsN, travelersN){
     return await callBackend('/refine', {
       destination: destination, country: country, tier: tier, instruction: instruction,
-      nights: nightsN, travelers: travelersN
+      nights: nightsN, travelers: travelersN, lang: window.getLang()
     });
   }
 
@@ -413,48 +528,46 @@
   let currentItinerary = null;
   let currentNights = 6, currentTravelers = 2, currentPromptText = '';
 
-  function tierKeyForBudget(label){
-    return label === 'Économique' ? 'low' : (label === 'Signature' ? 'high' : 'mid');
-  }
 
   function renderTierBody(dest, tier, destination){
     return '' +
-      '<div class="price">' + tier.estimatedTotal + '€ <span>total estimé</span></div>' +
-      '<div class="price-note">Hôtel suggéré : ' + tier.hotel.name + ' · ~' + tier.hotel.pricePerNight + '€/nuit</div>' +
-      '<div class="block"><div class="block-label">Activités</div><ul>' +
-        tier.activities.map(function(a){ return '<li><span>' + a + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + activityUrl(a, destination) + '">Voir →</a></li>'; }).join('') +
+      '<div class="price">' + tier.estimatedTotal + '€ <span>' + t('priceTotalNote') + '</span></div>' +
+      '<div class="price-note">' + t('hotelSuggested', { name: tier.hotel.name, price: tier.hotel.pricePerNight }) + '</div>' +
+      '<div class="block"><div class="block-label">' + t('activitiesBlockLabel') + '</div><ul>' +
+        tier.activities.map(function(a){ return '<li><span>' + a + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + activityUrl(a, destination) + '">' + t('seeLink') + '</a></li>'; }).join('') +
       '</ul></div>' +
-      '<div class="block"><div class="block-label">Tables suggérées</div><ul>' +
-        tier.restaurants.map(function(r){ return '<li><span>' + r + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + restaurantUrl(r, destination) + '">Voir →</a></li>'; }).join('') +
+      '<div class="block"><div class="block-label">' + t('restaurantsBlockLabel') + '</div><ul>' +
+        tier.restaurants.map(function(r){ return '<li><span>' + r + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + restaurantUrl(r, destination) + '">' + t('seeLink') + '</a></li>'; }).join('') +
       '</ul></div>';
   }
 
   function buildCard(destIdx, dest, tierKey, nightsN, travelersN){
     const tier = dest.tiers.find(function(t){ return t.key === tierKey; }) || dest.tiers[0];
     const destination = dest.destination + (dest.country ? ", " + dest.country : "");
+    const travelerWord = travelersN > 1 ? t('travelerWordPlural') : t('travelerWord');
     return '' +
       '<div class="card" data-dest="' + destIdx + '" data-tier="' + tier.key + '">' +
         '<div class="card-photo"><img alt="' + dest.destination + '" loading="lazy"></div>' +
         '<div class="tier-label">' +
           '<div class="tier-toggle">' + dest.tiers.map(function(t){ return '<button class="tt-btn' + (t.key===tier.key?' active':'') + '" data-tt="' + t.key + '">' + t.label + '</button>'; }).join('') + '</div>' +
-          '<button class="save-btn" data-action="save" title="Sauvegarder ce séjour">☆</button>' +
+          '<button class="save-btn" data-action="save" title="' + t('saveTitle') + '">☆</button>' +
         '</div>' +
         '<h3>' + dest.destination + '</h3>' +
-        '<div class="dest-meta">' + (dest.country||'') + ' · ' + nightsN + ' nuits · ' + travelersN + ' voyageur' + (travelersN>1?'s':'') + '</div>' +
+        '<div class="dest-meta">' + (dest.country||'') + ' · ' + nightsN + ' ' + t('nightsWord') + ' · ' + travelersN + ' ' + travelerWord + '</div>' +
         '<div class="tier-body">' + renderTierBody(dest, tier, destination) + '</div>' +
         '<div class="refine-box">' +
-          '<button class="refine-toggle" type="button" data-action="toggle-refine">✎ Personnaliser cette formule</button>' +
+          '<button class="refine-toggle" type="button" data-action="toggle-refine">' + t('customizeFormula') + '</button>' +
           '<div class="refine-panel" style="display:none;">' +
-            '<textarea class="refine-input" placeholder="Ex. enlève la visite du musée, ajoute une activité plus tranquille, hôtel un peu moins cher…"></textarea>' +
-            '<button class="book-btn ghost refine-submit" type="button" data-action="refine">Remodeler cette formule</button>' +
+            '<textarea class="refine-input" placeholder="' + t('refinePlaceholder') + '"></textarea>' +
+            '<button class="book-btn ghost refine-submit" type="button" data-action="refine">' + t('remodelBtn') + '</button>' +
             '<div class="refine-msg"></div>' +
           '</div>' +
         '</div>' +
         '<div class="card-cta">' +
-          '<button class="book-btn ghost" data-action="detail" type="button">Voir le détail jour par jour</button>' +
-          '<a class="book-btn" target="_blank" rel="noopener" href="' + bookingUrl(destination) + '">Réserver l\'hôtel sur Booking.com</a>' +
-          '<a class="book-btn secondary" target="_blank" rel="noopener" href="' + flightsUrl(destination) + '">Chercher les vols</a>' +
-          '<div class="commission-note">Prix affiché estimé par IA — à confirmer sur chaque plateforme</div>' +
+          '<button class="book-btn ghost" data-action="detail" type="button">' + t('dayDetailLink') + '</button>' +
+          '<a class="book-btn" target="_blank" rel="noopener" href="' + bookingUrl(destination) + '">' + t('bookHotel') + '</a>' +
+          '<a class="book-btn secondary" target="_blank" rel="noopener" href="' + flightsUrl(destination) + '">' + t('searchFlights') + '</a>' +
+          '<div class="commission-note">' + t('priceDisclaimer') + '</div>' +
         '</div>' +
       '</div>';
   }
@@ -478,7 +591,7 @@
     viewMode = mode;
     cardsEl.style.display = mode === 'cards' ? '' : 'none';
     compareWrap.classList.toggle('show', mode === 'compare');
-    viewToggleBtn.textContent = mode === 'cards' ? 'Comparer' : 'Voir les cartes';
+    viewToggleBtn.textContent = mode === 'cards' ? t('compareBtn') : t('viewCardsBtn');
     viewToggleBtn.classList.toggle('active', mode === 'compare');
     if(mode === 'compare') renderCompareTable();
   }
@@ -515,24 +628,24 @@
     }
 
     const rows = [
-      row('Formule', function(d, tier, idx){
-        return '<div class="tier-toggle">' + d.tiers.map(function(t){
-          return '<button class="tt-btn' + (t.key === tier.key ? ' active' : '') + '" data-cdest="' + idx + '" data-ctt="' + t.key + '">' + t.label + '</button>';
+      row(t('rowFormula'), function(d, tier, idx){
+        return '<div class="tier-toggle">' + d.tiers.map(function(tr){
+          return '<button class="tt-btn' + (tr.key === tier.key ? ' active' : '') + '" data-cdest="' + idx + '" data-ctt="' + tr.key + '">' + tr.label + '</button>';
         }).join('') + '</div>';
       }),
-      row('Pays', function(d){ return d.country || '—'; }),
-      row('Prix total', function(d, tier){ return '<span class="compare-price">' + tier.estimatedTotal + '€</span>'; }),
-      row('Hôtel', function(d, tier){ return tier.hotel.name + '<br>~' + tier.hotel.pricePerNight + '€/nuit'; }),
-      row('Activités', function(d, tier){
-        return tier.activities.length + ' activité' + (tier.activities.length > 1 ? 's' : '') +
+      row(t('rowCountry'), function(d){ return d.country || '—'; }),
+      row(t('rowPrice'), function(d, tier){ return '<span class="compare-price">' + tier.estimatedTotal + '€</span>'; }),
+      row(t('rowHotel'), function(d, tier){ return tier.hotel.name + '<br>~' + tier.hotel.pricePerNight + '€/nuit'; }),
+      row(t('rowActivities'), function(d, tier){
+        return t(tier.activities.length > 1 ? 'compareActivityCountPlural' : 'compareActivityCount', { n: tier.activities.length }) +
           '<ul class="compare-list">' + tier.activities.map(function(a){ return '<li>' + a + '</li>'; }).join('') + '</ul>';
       }),
-      row('Tables suggérées', function(d, tier){
-        return tier.restaurants.length + ' table' + (tier.restaurants.length > 1 ? 's' : '') +
+      row(t('rowRestaurants'), function(d, tier){
+        return t(tier.restaurants.length > 1 ? 'compareRestaurantCountPlural' : 'compareRestaurantCount', { n: tier.restaurants.length }) +
           '<ul class="compare-list">' + tier.restaurants.map(function(r){ return '<li>' + r + '</li>'; }).join('') + '</ul>';
       }),
       row('', function(d, tier, idx){
-        return '<a class="compare-detail-link" href="#" data-cdetail="' + idx + '">Voir le détail jour par jour →</a>';
+        return '<a class="compare-detail-link" href="#" data-cdetail="' + idx + '">' + t('compareDetailLink') + '</a>';
       })
     ].join('');
 
@@ -571,7 +684,7 @@
     results.scrollIntoView({behavior:'smooth', block:'start'});
 
     goBtn.disabled = true; regenBtn.disabled = true;
-    goBtn.textContent = "Claude compose l'itinéraire…";
+    goBtn.textContent = t('goBtnLoading');
     routePath.classList.add('done');
     wpEnd.setAttribute('r', 8);
 
@@ -580,30 +693,34 @@
       itinerary = await callGenerate(raw, nights, travelers, excludeDestinations);
     }catch(err){
       console.error(err);
-      itinerary = fallback;
+      itinerary = window.getLang() === 'en' ? fallbackEn : fallback;
       usedFallback = true;
-      errorMsg.textContent = "La génération IA n'a pas répondu à temps — voici des destinations de secours pour la démonstration.";
+      lastUsedFallback = true;
+      errorMsg.textContent = t('errorFallback');
       errorMsg.classList.add('show');
     }
 
     currentItinerary = itinerary;
     currentNights = nights; currentTravelers = travelers; currentPromptText = raw;
-    const defaultTier = tierKeyForBudget(budgetLabel);
+    const defaultTier = budgetKey;
     cardsEl.innerHTML = itinerary.destinations.map(function(d, idx){ return buildCard(idx, d, defaultTier, nights, travelers); }).join('');
     loadCardPhotos(itinerary);
 
     const names = itinerary.destinations.map(function(d){ return d.destination; });
-    document.getElementById('resultTitle').textContent = "Trois destinations pour cette envie";
-    document.getElementById('resultSub').textContent = "Claude a retenu " + names.join(', ') + ". Chaque carte a ses 3 formules — basculez librement entre elles, ou personnalisez-en une.";
-    sourceTag.textContent = usedFallback ? "Source : sélection de secours (hors ligne)" : "Source : généré en direct par Claude";
+    const resultTitleEl = document.getElementById('resultTitle');
+    resultTitleEl.dataset.state = 'generated';
+    resultTitleEl.textContent = t('resultTitleGenerated');
+    document.getElementById('resultSub').textContent = t('resultSubGenerated', { names: names.join(', ') });
+    lastUsedFallback = usedFallback;
+    sourceTag.textContent = usedFallback ? t('sourceFallback') : t('sourceLive');
     sourceTag.className = "source-tag" + (usedFallback ? "" : " ai");
 
     goBtn.disabled = false; regenBtn.disabled = false;
-    goBtn.textContent = "Tracer mon itinéraire";
+    goBtn.textContent = t('goBtn');
 
     if(!usedFallback){
       callBackend('/history', {
-        sessionId: sessionId, promptText: raw, tags: [...activeTags], budgetLabel: budgetLabel,
+        sessionId: sessionId, promptText: raw, tags: [...activeTags], budgetLabel: budgetLabelFor(budgetKey),
         nights: nights, travelers: travelers, destination: names.join(' / ')
       }).then(renderHistory).catch(function(err){ console.warn('Historique non sauvegardé', err); });
     }
@@ -633,7 +750,7 @@
       const panel = toggleRefineBtn.nextElementSibling;
       const isOpen = panel.style.display !== 'none';
       panel.style.display = isOpen ? 'none' : 'block';
-      toggleRefineBtn.textContent = isOpen ? '✎ Personnaliser cette formule' : '✕ Fermer';
+      toggleRefineBtn.textContent = isOpen ? t('customizeFormula') : t('closeX');
       return;
     }
 
@@ -650,7 +767,7 @@
       if(!instruction){ textarea.focus(); return; }
 
       refineBtn.disabled = true;
-      refineBtn.textContent = 'Remodelage en cours…';
+      refineBtn.textContent = t('remodeling');
       msgEl.textContent = '';
       msgEl.className = 'refine-msg';
 
@@ -662,16 +779,16 @@
         const destination = dest.destination + (dest.country ? ", " + dest.country : "");
         cardEl.querySelector('.tier-body').innerHTML = renderTierBody(dest, updatedTier, destination);
         if(compareWrap.classList.contains('show')) renderCompareTable();
-        msgEl.textContent = 'Formule mise à jour ✓';
+        msgEl.textContent = t('remodelOk');
         msgEl.className = 'refine-msg ok';
         textarea.value = '';
       }catch(err){
         console.error(err);
-        msgEl.textContent = "Le remodelage n'a pas abouti — réessayez dans un instant.";
+        msgEl.textContent = t('remodelError');
         msgEl.className = 'refine-msg error';
       }finally{
         refineBtn.disabled = false;
-        refineBtn.textContent = 'Remodeler cette formule';
+        refineBtn.textContent = t('remodelBtn');
       }
       return;
     }
@@ -719,7 +836,7 @@
       const res = await fetch('/api/trips?sessionId=' + encodeURIComponent(sessionId));
       const items = await res.json();
       if(!items.length){
-        savedListEl.innerHTML = '<div class="saved-empty">Aucun séjour sauvegardé pour l’instant.</div>';
+        savedListEl.innerHTML = '<div class="saved-empty">' + t('savedEmpty') + '</div>';
         savedCountEl.textContent = '0';
         return;
       }
@@ -731,13 +848,13 @@
           '<div class="si-meta">' + (it.meta||'') + '</div>' +
           '<div class="si-price">' + (it.price||'') + '</div>' +
           '<div class="saved-item-actions">' +
-            '<a class="si-link" target="_blank" rel="noopener" href="' + (it.bookingHref||'#') + '">Réserver →</a>' +
-            '<button class="si-remove" data-remove="' + it.id + '">Retirer</button>' +
+            '<a class="si-link" target="_blank" rel="noopener" href="' + (it.bookingHref||'#') + '">' + t('reserveLink') + '</a>' +
+            '<button class="si-remove" data-remove="' + it.id + '">' + t('removeLink') + '</button>' +
           '</div></div>';
       }).join('');
     }catch(err){
       console.error('Impossible de charger les séjours sauvegardés', err);
-      savedListEl.innerHTML = '<div class="saved-empty">Sauvegarde indisponible pour le moment.</div>';
+      savedListEl.innerHTML = '<div class="saved-empty">' + t('savedUnavailable') + '</div>';
     }
   }
 
@@ -749,7 +866,7 @@
       const res = await fetch('/api/history?sessionId=' + encodeURIComponent(sessionId));
       const items = await res.json();
       if(!items.length){ historyRow.classList.remove('show'); return; }
-      historyRow.innerHTML = '<div class="history-row-label">Recherches récentes</div>' +
+      historyRow.innerHTML = '<div class="history-row-label">' + t('recentSearches') + '</div>' +
         items.map(function(it, idx){
           const short = (it.promptText||'').length > 42 ? it.promptText.slice(0,42) + '…' : (it.promptText||'');
           return '<button class="history-chip" data-idx="' + idx + '">' + short + (it.destination ? ' <span class="dest">→ ' + it.destination + '</span>' : '') + '</button>';
@@ -769,8 +886,9 @@
     document.getElementById('promptInput').value = it.promptText || '';
     chipEls.forEach(function(c){ c.classList.toggle('on', (it.tags||[]).includes(c.dataset.tag)); });
     activeTags.clear(); (it.tags||[]).forEach(function(t){ activeTags.add(t); });
-    budgetEls.forEach(function(b){ b.classList.toggle('on', b.dataset.label === it.budgetLabel); });
-    if(it.budgetLabel) budgetLabel = it.budgetLabel;
+    const restoredKey = it.budgetLabel ? budgetKeyFromLabel(it.budgetLabel) : budgetKey;
+    budgetEls.forEach(function(b){ b.classList.toggle('on', b.dataset.budget === restoredKey); });
+    budgetKey = restoredKey;
     if(it.nights){ nights = it.nights; nightVal.textContent = nights; }
     if(it.travelers){ travelers = it.travelers; travVal.textContent = travelers; }
     updateHint();
@@ -804,15 +922,15 @@
 
     document.getElementById('detailTierLabel').textContent = tier.label;
     document.getElementById('detailTitle').textContent = dest.destination;
-    document.getElementById('detailMeta').textContent = currentNights + ' nuits · ' + currentTravelers + ' voyageur' + (currentTravelers>1?'s':'') + ' · Hôtel : ' + tier.hotel.name;
+    document.getElementById('detailMeta').textContent = currentNights + ' ' + t('nightsWord') + ' · ' + currentTravelers + ' ' + (currentTravelers>1 ? t('travelerWordPlural') : t('travelerWord')) + ' · ' + t('detailMetaHotel', { name: tier.hotel.name });
     document.getElementById('detailPrice').textContent = tier.estimatedTotal + '€';
-    document.getElementById('detailPriceNote').textContent = 'Total estimé, hôtel ~' + tier.hotel.pricePerNight + '€/nuit — à confirmer sur chaque plateforme';
+    document.getElementById('detailPriceNote').textContent = t('detailPriceNote', { price: tier.hotel.pricePerNight });
     document.getElementById('detailBookBtn').href = bookingUrl(currentDestinationFull);
     document.getElementById('detailFlightsBtn').href = flightsUrl(currentDestinationFull);
     document.getElementById('detailMapFrame').src = mapEmbedUrl(currentDestinationFull);
     shareConfirm.textContent = '';
     emailPanel.style.display = 'none';
-    emailToggleBtn.textContent = '✉ Recevoir cet itinéraire par email';
+    emailToggleBtn.textContent = t('emailToggleOpen');
     emailInput.value = '';
     document.getElementById('emailConsent').checked = false;
     emailMsg.textContent = ''; emailMsg.className = 'refine-msg';
@@ -823,7 +941,7 @@
     gallery.classList.remove('show');
     gallery.innerHTML = '';
     dayTabs.innerHTML = '';
-    dayPanels.innerHTML = '<div class="day-loading">Claude compose le déroulé jour par jour…</div>';
+    dayPanels.innerHTML = '<div class="day-loading">' + t('dayComposing') + '</div>';
 
     detailOverlay.classList.add('show');
     document.body.classList.add('locked');
@@ -841,22 +959,22 @@
     try{
       const plan = await callDayPlan(currentDestinationFull, tier, currentNights);
       const days = plan.days;
-      let tabsHtml = days.map(function(d,i){ return '<button class="day-tab' + (i===0?' active':'') + '" data-day="' + i + '">Jour ' + d.day + '</button>'; }).join('');
+      let tabsHtml = days.map(function(d,i){ return '<button class="day-tab' + (i===0?' active':'') + '" data-day="' + i + '">' + t('dayLabel') + ' ' + d.day + '</button>'; }).join('');
       let panelsHtml = days.map(function(d,i){
         return '<div class="day-panel' + (i===0?' active':'') + '" data-day="' + i + '">' +
-          '<h4>' + (d.title || ('Jour ' + d.day)) + '</h4>' +
+          '<h4>' + (d.title || (t('dayLabel') + ' ' + d.day)) + '</h4>' +
           (d.slots||[]).map(function(s){ return '<div class="day-slot"><div class="dtime">' + s.time + '</div><div class="dtext">' + s.text + '</div></div>'; }).join('') +
         '</div>';
       }).join('');
 
       if(plan.remainingNights > 0){
         const restIdx = days.length;
-        const rangeLabel = 'Jours ' + (days.length + 1) + '–' + currentNights;
+        const rangeLabel = t('daysRangeLabel') + ' ' + (days.length + 1) + '–' + currentNights;
         tabsHtml += '<button class="day-tab" data-day="' + restIdx + '">' + rangeLabel + '</button>';
         panelsHtml += '<div class="day-panel" data-day="' + restIdx + '">' +
-          '<h4>Le reste du séjour</h4>' +
-          '<div class="day-slot"><div class="dtime">' + plan.remainingNights + ' nuit' + (plan.remainingNights>1?'s':'') + '</div><div class="dtext">' +
-            (plan.remainingSummary || "Le reste du séjour est laissé volontairement libre : profitez de l'hôtel, explorez à votre rythme, et piochez parmi les activités et tables déjà suggérées.") +
+          '<h4>' + t('restOfTripTitle') + '</h4>' +
+          '<div class="day-slot"><div class="dtime">' + plan.remainingNights + ' ' + (plan.remainingNights>1 ? t('nightWordPlural') : t('nightWord')) + '</div><div class="dtext">' +
+            (plan.remainingSummary || t('restOfTripDefault')) +
           '</div></div>' +
         '</div>';
       }
@@ -865,7 +983,7 @@
       dayPanels.innerHTML = panelsHtml;
     }catch(err){
       console.error(err);
-      dayPanels.innerHTML = '<div class="day-error">Le déroulé jour par jour n’a pas pu être généré pour le moment. Réessayez dans un instant.</div>';
+      dayPanels.innerHTML = '<div class="day-error">' + t('dayError') + '</div>';
     }
   }
 
@@ -891,26 +1009,26 @@
   function buildShareText(){
     if(!currentTier) return '';
     return currentDestinationFull + ' — ' + currentTier.label + '\n' +
-      currentNights + ' nuits · ' + currentTravelers + ' voyageur(s)\n' +
-      'Hôtel : ' + currentTier.hotel.name + ' (~' + currentTier.hotel.pricePerNight + '€/nuit)\n' +
-      'Activités : ' + currentTier.activities.join(', ') + '\n' +
-      'Restaurants : ' + currentTier.restaurants.join(', ') + '\n' +
-      'Total estimé : ' + currentTier.estimatedTotal + '€\n\n' +
-      'Composé sur Peacetrip — ' + bookingUrl(currentDestinationFull);
+      t('shareNightsLine', { nights: currentNights, travelers: currentTravelers }) + '\n' +
+      t('shareHotelLine', { name: currentTier.hotel.name, price: currentTier.hotel.pricePerNight }) + '\n' +
+      t('shareActivitiesLine', { list: currentTier.activities.join(', ') }) + '\n' +
+      t('shareRestaurantsLine', { list: currentTier.restaurants.join(', ') }) + '\n' +
+      t('shareTotalLine', { total: currentTier.estimatedTotal }) + '\n\n' +
+      t('shareFooterLine', { url: bookingUrl(currentDestinationFull) });
   }
 
   document.getElementById('detailShareBtn').addEventListener('click', async function(){
     const text = buildShareText();
     if(!text) return;
     if(navigator.share){
-      try{ await navigator.share({ title: 'Mon séjour ' + currentDestinationFull, text: text }); return; }
+      try{ await navigator.share({ title: t('shareTitlePrefix') + ' ' + currentDestinationFull, text: text }); return; }
       catch(_e){ /* annulé ou non supporté, on retombe sur le presse-papiers */ }
     }
     try{
       await navigator.clipboard.writeText(text);
-      shareConfirm.textContent = 'Récapitulatif copié dans le presse-papiers ✓';
+      shareConfirm.textContent = t('shareCopied');
     }catch(_e){
-      shareConfirm.textContent = 'Copie automatique indisponible — sélectionnez le texte manuellement.';
+      shareConfirm.textContent = t('shareCopyFailed');
     }
     setTimeout(function(){ shareConfirm.textContent = ''; }, 4000);
   });
@@ -938,7 +1056,7 @@
   emailToggleBtn.addEventListener('click', function(){
     const isOpen = emailPanel.style.display !== 'none';
     emailPanel.style.display = isOpen ? 'none' : 'block';
-    emailToggleBtn.textContent = isOpen ? '✉ Recevoir cet itinéraire par email' : '✕ Fermer';
+    emailToggleBtn.textContent = isOpen ? t('emailToggleOpen') : t('closeX');
     if(!isOpen) emailInput.focus();
   });
 
@@ -948,24 +1066,25 @@
     if(!currentTier) return;
 
     emailSubmitBtn.disabled = true;
-    emailSubmitBtn.textContent = 'Envoi…';
+    emailSubmitBtn.textContent = t('emailSending');
     emailMsg.textContent = ''; emailMsg.className = 'refine-msg';
 
     try{
       await callBackend('/email-itinerary', {
         email: email, destinationFull: currentDestinationFull, tier: currentTier,
         nights: currentNights, travelers: currentTravelers,
-        marketingConsent: document.getElementById('emailConsent').checked
+        marketingConsent: document.getElementById('emailConsent').checked,
+        lang: window.getLang()
       });
-      emailMsg.textContent = 'Itinéraire envoyé ✓ (vérifiez vos spams si besoin)';
+      emailMsg.textContent = t('emailSuccess');
       emailMsg.className = 'refine-msg ok';
       emailInput.value = '';
     }catch(err){
-      emailMsg.textContent = err.message || "L'envoi a échoué — réessayez dans un instant.";
+      emailMsg.textContent = err.message || t('emailErrorGeneric');
       emailMsg.className = 'refine-msg error';
     }finally{
       emailSubmitBtn.disabled = false;
-      emailSubmitBtn.textContent = 'Envoyer';
+      emailSubmitBtn.textContent = t('emailSendBtn');
     }
   });
 
@@ -980,10 +1099,8 @@
     document.getElementById('panel').scrollIntoView({behavior:'smooth', block:'start'});
   })();
 
+  applyI18n(); // also runs updateHint(), renderAuthNav(), renderSavedTrips(), renderHistory()
   checkAuth();
-  renderSavedTrips();
-  renderHistory();
-  updateHint();
 })();
 </script>
 

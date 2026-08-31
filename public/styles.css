@@ -87,10 +87,11 @@ textarea:focus{outline:none;}
 .row-split{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:end;margin-bottom:24px;}
 .budget-row{display:flex;gap:8px;}
 .budget{flex:1;text-align:center;padding:11px 8px;border:1px solid var(--border);border-radius:10px;cursor:pointer;font-size:0.85rem;color:var(--text-soft);transition:all .18s;}
-.budget span{display:block;font-family:var(--mono);font-size:0.72rem;margin-top:3px;color:var(--text-mute);}
+.budget .budget-label{display:block;}
+.budget .budget-range{display:block;font-family:var(--mono);font-size:0.72rem;margin-top:3px;color:var(--text-mute);}
 .budget:hover{border-color:var(--border-strong);}
 .budget.on{border-color:var(--blue);background:rgba(47,143,239,0.1);color:var(--text);}
-.budget.on span{color:var(--blue-deep);}
+.budget.on .budget-range{color:var(--blue-deep);}
 
 .steppers{display:flex;gap:18px;}
 .stepper{text-align:center;}
