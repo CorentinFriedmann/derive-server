@@ -106,10 +106,6 @@ function findUserByEmail(email) {
   return db.prepare('SELECT id, email, password_hash AS passwordHash FROM users WHERE email = ?').get(email);
 }
 
-function findUserById(id) {
-  return db.prepare('SELECT id, email FROM users WHERE id = ?').get(id);
-}
-
 // Reattach a guest session's existing trips/history to a real account —
 // called right after signup and on every login, so nothing gets stranded
 // under the old browser-generated id.
@@ -222,6 +218,6 @@ function setCachedGeneration(cacheKey, payload, ttlMs) {
 
 module.exports = {
   listTrips, insertTrip, deleteTrip, listHistory, insertHistory,
-  createUser, findUserByEmail, findUserById, migrateGuestData,
+  createUser, findUserByEmail, migrateGuestData,
   insertEmailCapture, getCachedGeneration, setCachedGeneration
 };

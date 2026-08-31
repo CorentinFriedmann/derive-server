@@ -562,6 +562,13 @@
   function flightsUrl(destination){ return "https://www.google.com/travel/flights?q=" + encodeURIComponent("Vols vers " + destination); }
   function mapEmbedUrl(destination){ return "https://www.google.com/maps?q=" + encodeURIComponent(destination) + "&output=embed"; }
 
+  // Strips accents before dropping non-alphanumeric chars, so "Île de Ré"
+  // becomes "ile-de-re" instead of losing the accented letters outright
+  // (plain replace(/[^a-z0-9]+/g,'-') would turn "Île" into just "-le").
+  function slugify(text){
+    return (text || 'sejour').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '');
+  }
+
   // Real photos via our own server (server-to-server fetch to Wikipedia has
   // no CORS/sandbox issue at all, unlike calling it from the browser).
   async function fetchPhoto(name){
@@ -1133,7 +1140,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'peacetrip-' + (currentDestinationFull||'sejour').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.txt';
+    a.download = 'peacetrip-' + slugify(currentDestinationFull) + '.txt';
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -1160,7 +1167,7 @@
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = 'peacetrip-' + (currentDestinationFull||'sejour').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.pdf';
+      a.download = 'peacetrip-' + slugify(currentDestinationFull) + '.pdf';
       document.body.appendChild(a);
       a.click();
       a.remove();

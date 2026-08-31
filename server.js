@@ -69,10 +69,6 @@ function identityFrom(req, bodyOrQuery) {
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Appended to the system prompts of /api/generate, /api/day-plan and
-// /api/refine so the AI-generated content matches the frontend language
-// (see public/i18n.js — `lang` travels with every one of those calls).
-// The JSON schema's KEY names never change, only the text VALUES do.
 // ---------------------------------------------------------------------
 // /api/generate cache — skips the Claude call entirely when a near-
 // identical request (same normalized prompt + budget + nights/travelers
@@ -98,6 +94,10 @@ function cacheKeyFor({ promptText, budgetLabel, nights, travelers, tags, lang })
   return crypto.createHash('sha256').update(raw).digest('hex');
 }
 
+// Appended to the system prompts of /api/generate, /api/day-plan and
+// /api/refine so the AI-generated content matches the frontend language
+// (see public/i18n.js — `lang` travels with every one of those calls).
+// The JSON schema's KEY names never change, only the text VALUES do.
 function langDirective(lang) {
   if (lang !== 'en') return '';
   return ' IMPORTANT — respond entirely in English: every text VALUE (destination and country names, tier labels — e.g. "Essential"/"Comfort"/"Signature" instead of "Essentiel"/"Confort"/"Signature" —, hotel/activity/restaurant names, day titles and descriptions) must be in English. Only the JSON key names stay exactly as given in the schema.';
@@ -120,6 +120,21 @@ const authLimiter = rateLimit({
 const aiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de demandes — réessayez dans quelques minutes.' }
+});
+
+// Everything else that was still unprotected: trips/history read+write
+// (no auth required — anyone can call these with a made-up sessionId, so
+// without a limit they're an open door to flood the database) and the
+// Wikipedia proxy (photo/gallery/export-pdf don't cost us API money, but
+// hammering them is still free abuse of our server + Wikipedia's).
+// Generous on purpose — a normal session calls these far more often than
+// it calls the AI routes (every card render fetches a photo).
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 120,
   standardHeaders: true,
   legacyHeaders: false,
   message: { error: 'Trop de demandes — réessayez dans quelques minutes.' }
@@ -376,7 +391,7 @@ function nameVariants(name) {
   return variants;
 }
 
-app.get('/api/photo', async (req, res) => {
+app.get('/api/photo', generalLimiter, async (req, res) => {
   const name = req.query.name;
   if (!name) return res.status(400).json({ error: 'name requis' });
 
@@ -400,7 +415,7 @@ app.get('/api/photo', async (req, res) => {
   res.json({ src });
 });
 
-app.get('/api/gallery', async (req, res) => {
+app.get('/api/gallery', generalLimiter, async (req, res) => {
   const name = req.query.name;
   if (!name) return res.status(400).json({ error: 'name requis' });
 
@@ -439,13 +454,13 @@ app.get('/api/gallery', async (req, res) => {
 // Guest mode keeps working exactly as before — an account is optional.
 // ---------------------------------------------------------------------
 
-app.get('/api/trips', (req, res) => {
+app.get('/api/trips', generalLimiter, (req, res) => {
   const identity = identityFrom(req, req.query);
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
   res.json(db.listTrips(identity));
 });
 
-app.post('/api/trips', (req, res) => {
+app.post('/api/trips', generalLimiter, (req, res) => {
   const { sessionId, ...trip } = req.body || {};
   const identity = identityFrom(req, { sessionId });
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
@@ -453,20 +468,20 @@ app.post('/api/trips', (req, res) => {
   res.json({ id });
 });
 
-app.delete('/api/trips/:id', (req, res) => {
+app.delete('/api/trips/:id', generalLimiter, (req, res) => {
   const identity = identityFrom(req, req.query);
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
   db.deleteTrip(identity, req.params.id);
   res.json({ ok: true });
 });
 
-app.get('/api/history', (req, res) => {
+app.get('/api/history', generalLimiter, (req, res) => {
   const identity = identityFrom(req, req.query);
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
   res.json(db.listHistory(identity));
 });
 
-app.post('/api/history', (req, res) => {
+app.post('/api/history', generalLimiter, (req, res) => {
   const { sessionId, ...entry } = req.body || {};
   const identity = identityFrom(req, { sessionId });
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
@@ -510,8 +525,11 @@ function buildItineraryEmailHtml({ destinationFull, tier, nights, travelers, lan
   const s = EMAIL_STRINGS[lang === 'en' ? 'en' : 'fr'];
   const restaurantNames = (tier.restaurants || []).map(r => (typeof r === 'string' ? r : r.name));
   const list = items => items.map(i => '<li style="margin-bottom:4px;">' + escapeHtmlForEmail(i) + '</li>').join('');
-  const priceUnit = lang === 'en' ? `$${tier.hotel.pricePerNight}` : `${tier.hotel.pricePerNight}€`;
-  const totalUnit = lang === 'en' ? `$${tier.estimatedTotal}` : `${tier.estimatedTotal}€`;
+  // Always € — the AI is told to price in euros unconditionally, in French
+  // or English, so "$" here would relabel the same number as a different
+  // currency rather than convert it. See the matching note in itineraryPdf.js.
+  const priceUnit = `${tier.hotel.pricePerNight}€`;
+  const totalUnit = `${tier.estimatedTotal}€`;
   return `
     <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#0E2A3D;">
       <p style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5C7C93;margin:0 0 6px;">Peacetrip · ${escapeHtmlForEmail(tier.label)}</p>
@@ -553,12 +571,15 @@ app.post('/api/email-itinerary', emailLimiter, async (req, res) => {
 // /api/export-pdf — same tier data as the email/txt export, as a PDF.
 // ---------------------------------------------------------------------
 
-app.post('/api/export-pdf', (req, res) => {
+app.post('/api/export-pdf', generalLimiter, (req, res) => {
   try {
     const { destinationFull, tier, nights, travelers, lang } = req.body || {};
     if (!destinationFull || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
 
-    const filename = (destinationFull || 'sejour').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '.pdf';
+    // ̀-ͯ is the combining-diacritics block NFD splits accents
+    // into (e.g. "é" -> "e" + U+0301) — stripping it keeps "ile-de-re"
+    // instead of losing accented letters outright.
+    const filename = (destinationFull || 'sejour').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.pdf';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
     buildItineraryPdf({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1, lang }, res);
