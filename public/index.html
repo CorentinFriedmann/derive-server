@@ -70,9 +70,9 @@
 
     <div class="row-split">
       <div class="budget-row" id="budgetRow">
-        <div class="budget" data-budget="low"><span class="budget-label" data-i18n="budgetLow">Économique</span><span class="budget-range" data-i18n="budgetLowRange">≈ 700–900€</span></div>
-        <div class="budget on" data-budget="mid"><span class="budget-label" data-i18n="budgetMid">Confort</span><span class="budget-range" data-i18n="budgetMidRange">≈ 1100–1500€</span></div>
-        <div class="budget" data-budget="high"><span class="budget-label" data-i18n="budgetHigh">Signature</span><span class="budget-range" data-i18n="budgetHighRange">≈ 2000€ et +</span></div>
+        <button type="button" class="budget" data-budget="low"><span class="budget-label" data-i18n="budgetLow">Économique</span><span class="budget-range" data-i18n="budgetLowRange">≈ 700–900€</span></button>
+        <button type="button" class="budget on" data-budget="mid"><span class="budget-label" data-i18n="budgetMid">Confort</span><span class="budget-range" data-i18n="budgetMidRange">≈ 1100–1500€</span></button>
+        <button type="button" class="budget" data-budget="high"><span class="budget-label" data-i18n="budgetHigh">Signature</span><span class="budget-range" data-i18n="budgetHighRange">≈ 2000€ et +</span></button>
       </div>
       <div class="steppers">
         <div class="stepper">
@@ -154,7 +154,7 @@
 
 <!-- AUTH MODAL -->
 <div class="auth-overlay" id="authOverlay">
-  <div class="auth-panel">
+  <div class="auth-panel" role="dialog" aria-modal="true">
     <button class="detail-close" id="authClose" data-i18n-aria="closeLoginAria" aria-label="Fermer la connexion">×</button>
     <div class="auth-tabs">
       <button class="auth-tab active" type="button" data-tab="login" data-i18n="authTabLogin">Connexion</button>
@@ -172,7 +172,7 @@
 
 <!-- DETAIL OVERLAY -->
 <div class="detail-overlay" id="detailOverlay">
-  <div class="detail-panel">
+  <div class="detail-panel" role="dialog" aria-modal="true" aria-labelledby="detailTitle">
     <button class="detail-close" id="detailClose" data-i18n-aria="closeDetailAria" aria-label="Fermer le détail">×</button>
     <div class="detail-hero">
       <img id="detailHeroImg" alt="" style="display:none;">
@@ -310,6 +310,28 @@
     applyI18n();
   });
 
+  // --- Focus trap for modal dialogs (detail panel + auth modal) ----------
+  // Keeps Tab/Shift+Tab cycling inside the open dialog instead of leaking
+  // focus to the page behind it. Call the returned function to release the
+  // listener when the dialog closes.
+  function trapFocus(container){
+    function focusable(){
+      return Array.prototype.slice.call(
+        container.querySelectorAll('a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])')
+      ).filter(function(el){ return el.offsetParent !== null; });
+    }
+    function onKeydown(e){
+      if(e.key !== 'Tab') return;
+      const items = focusable();
+      if(!items.length) return;
+      const first = items[0], last = items[items.length - 1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+    container.addEventListener('keydown', onKeydown);
+    return function release(){ container.removeEventListener('keydown', onKeydown); };
+  }
+
   // --- Auth (optional account) -------------------------------------------
   // A logged-in user is identified server-side by an httpOnly cookie — we
   // never store the password or a token here, just a client-side mirror of
@@ -333,16 +355,29 @@
     }
   }
 
+  const authPanel = document.querySelector('.auth-panel');
+  let authOpener = null;
+  let releaseAuthTrap = null;
+
   function openAuth(mode){
     authMode = mode || 'login';
     authTabs.forEach(function(tabEl){ tabEl.classList.toggle('active', tabEl.dataset.tab === authMode); });
     authSubmit.textContent = authMode === 'signup' ? t('authSubmitSignup') : t('authSubmitLogin');
+    authPanel.setAttribute('aria-label', authMode === 'signup' ? t('authTabSignup') : t('authTabLogin'));
     document.getElementById('authPassword').setAttribute('autocomplete', authMode === 'signup' ? 'new-password' : 'current-password');
     authMsg.textContent = ''; authMsg.className = 'auth-msg';
+    authOpener = document.activeElement;
     authOverlay.classList.add('show');
+    releaseAuthTrap = trapFocus(authPanel);
     document.getElementById('authEmail').focus();
   }
-  function closeAuth(){ authOverlay.classList.remove('show'); authForm.reset(); }
+  function closeAuth(){
+    authOverlay.classList.remove('show');
+    authForm.reset();
+    if(releaseAuthTrap){ releaseAuthTrap(); releaseAuthTrap = null; }
+    if(authOpener && document.body.contains(authOpener)) authOpener.focus();
+    authOpener = null;
+  }
 
   navAuthSlot.addEventListener('click', function(e){
     if(e.target.closest('#navAuthBtn')){ openAuth('login'); return; }
@@ -357,6 +392,7 @@
   });
   authClose.addEventListener('click', closeAuth);
   authOverlay.addEventListener('click', function(e){ if(e.target === authOverlay) closeAuth(); });
+  document.addEventListener('keydown', function(e){ if(e.key === 'Escape' && authOverlay.classList.contains('show')) closeAuth(); });
   authTabs.forEach(function(t){ t.addEventListener('click', function(){ openAuth(t.dataset.tab); }); });
 
   authForm.addEventListener('submit', async function(e){
@@ -550,7 +586,7 @@
         '<div class="card-photo"><img alt="' + dest.destination + '" loading="lazy"></div>' +
         '<div class="tier-label">' +
           '<div class="tier-toggle">' + dest.tiers.map(function(t){ return '<button class="tt-btn' + (t.key===tier.key?' active':'') + '" data-tt="' + t.key + '">' + t.label + '</button>'; }).join('') + '</div>' +
-          '<button class="save-btn" data-action="save" title="' + t('saveTitle') + '">☆</button>' +
+          '<button class="save-btn" data-action="save" title="' + t('saveTitle') + '" aria-label="' + t('saveTitle') + '">☆</button>' +
         '</div>' +
         '<h3>' + dest.destination + '</h3>' +
         '<div class="dest-meta">' + (dest.country||'') + ' · ' + nightsN + ' ' + t('nightsWord') + ' · ' + travelersN + ' ' + travelerWord + '</div>' +
@@ -901,11 +937,18 @@
   const dayTabs = document.getElementById('dayTabs');
   const dayPanels = document.getElementById('dayPanels');
   const shareConfirm = document.getElementById('shareConfirm');
+  const detailPanel = document.querySelector('.detail-panel');
   let currentTier = null, currentDestinationFull = '';
+  let detailOpener = null;
+  let releaseDetailTrap = null;
 
   function closeDetail(){
+    if(!detailOverlay.classList.contains('show')) return;
     detailOverlay.classList.remove('show');
     document.body.classList.remove('locked');
+    if(releaseDetailTrap){ releaseDetailTrap(); releaseDetailTrap = null; }
+    if(detailOpener && document.body.contains(detailOpener)) detailOpener.focus();
+    detailOpener = null;
   }
   detailClose.addEventListener('click', closeDetail);
   detailOverlay.addEventListener('click', function(e){ if(e.target === detailOverlay) closeDetail(); });
@@ -917,6 +960,7 @@
     if(!dest) return;
     const tier = dest.tiers.find(function(t){ return t.key === tierKey; });
     if(!tier) return;
+    detailOpener = document.activeElement;
     currentTier = tier;
     currentDestinationFull = dest.destination + (dest.country ? ", " + dest.country : "");
 
@@ -945,13 +989,15 @@
 
     detailOverlay.classList.add('show');
     document.body.classList.add('locked');
+    releaseDetailTrap = trapFocus(detailPanel);
+    detailClose.focus();
 
     fetchPhoto(dest.destination).then(function(src){
       if(src){ img.src = src; img.style.display = 'block'; }
     });
     fetchGallery(dest.destination).then(function(urls){
       if(!urls.length) return;
-      gallery.innerHTML = urls.map(function(u, i){ return '<img src="' + u + '" loading="lazy" alt="" data-src="' + u + '" class="' + (i===0?'active':'') + '">'; }).join('');
+      gallery.innerHTML = urls.map(function(u, i){ return '<button type="button" class="gallery-thumb' + (i===0?' active':'') + '" data-src="' + u + '"><img src="' + u + '" loading="lazy" alt="' + t('galleryThumbAlt', { n: i + 1 }) + '"></button>'; }).join('');
       gallery.classList.add('show');
       if(img.style.display === 'none'){ img.src = urls[0]; img.style.display = 'block'; }
     });
@@ -998,9 +1044,9 @@
   });
 
   document.getElementById('detailGallery').addEventListener('click', function(e){
-    const thumb = e.target.closest('img');
+    const thumb = e.target.closest('.gallery-thumb');
     if(!thumb) return;
-    document.getElementById('detailGallery').querySelectorAll('img').forEach(function(t){ t.classList.remove('active'); });
+    document.getElementById('detailGallery').querySelectorAll('.gallery-thumb').forEach(function(b){ b.classList.remove('active'); });
     thumb.classList.add('active');
     document.getElementById('detailHeroImg').src = thumb.dataset.src;
     document.getElementById('detailHeroImg').style.display = 'block';

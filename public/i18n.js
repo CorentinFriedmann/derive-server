@@ -135,7 +135,8 @@ window.I18N = {
     emailSuccess: 'Itinéraire envoyé ✓ (vérifiez vos spams si besoin)',
     emailErrorGeneric: "L'envoi a échoué — réessayez dans un instant.",
 
-    langToggleAria: 'Switch to English'
+    langToggleAria: 'Switch to English',
+    galleryThumbAlt: 'Photo {{n}}'
   },
 
   en: {
@@ -261,7 +262,8 @@ window.I18N = {
     emailSuccess: 'Itinerary sent ✓ (check spam if needed)',
     emailErrorGeneric: "Sending failed — try again in a moment.",
 
-    langToggleAria: 'Passer en français'
+    langToggleAria: 'Passer en français',
+    galleryThumbAlt: 'Photo {{n}}'
   }
 };
 
