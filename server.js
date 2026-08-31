@@ -6,6 +6,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -14,6 +15,7 @@ const db = require('./db');
 const { askClaude, parseJsonLenient } = require('./lib/claude');
 const { renderDestinationPage } = require('./lib/destinationPage');
 const { sendEmail } = require('./lib/resend');
+const { buildItineraryPdf } = require('./lib/itineraryPdf');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -71,6 +73,31 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // /api/refine so the AI-generated content matches the frontend language
 // (see public/i18n.js — `lang` travels with every one of those calls).
 // The JSON schema's KEY names never change, only the text VALUES do.
+// ---------------------------------------------------------------------
+// /api/generate cache — skips the Claude call entirely when a near-
+// identical request (same normalized prompt + budget + nights/travelers
+// + language) was already answered in the last 24h. Deliberately NOT used
+// when excludeDestinations is set ("propose autre chose" explicitly wants
+// something different, caching would defeat the point).
+// ---------------------------------------------------------------------
+
+const GENERATION_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+function normalizePromptForCache(text) {
+  return String(text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function cacheKeyFor({ promptText, budgetLabel, nights, travelers, tags, lang }) {
+  const raw = JSON.stringify({
+    p: normalizePromptForCache(promptText),
+    b: String(budgetLabel || '').trim().toLowerCase(),
+    n: nights, t: travelers,
+    tags: (tags || []).map(t => String(t).toLowerCase()).sort(),
+    lang: lang === 'en' ? 'en' : 'fr'
+  });
+  return crypto.createHash('sha256').update(raw).digest('hex');
+}
+
 function langDirective(lang) {
   if (lang !== 'en') return '';
   return ' IMPORTANT — respond entirely in English: every text VALUE (destination and country names, tier labels — e.g. "Essential"/"Comfort"/"Signature" instead of "Essentiel"/"Confort"/"Signature" —, hotel/activity/restaurant names, day titles and descriptions) must be in English. Only the JSON key names stay exactly as given in the schema.';
@@ -135,6 +162,13 @@ app.get('/api/auth/me', (req, res) => {
   res.json({ user: req.user || null });
 });
 
+// Tells the frontend whether/where to load Plausible (privacy-friendly,
+// cookieless analytics — no Google Analytics). Nothing loads until
+// ANALYTICS_DOMAIN is set in .env, so this is a safe no-op out of the box.
+app.get('/api/config', (req, res) => {
+  res.json({ analyticsDomain: process.env.ANALYTICS_DOMAIN || null });
+});
+
 // ---------------------------------------------------------------------
 // /api/generate — the main "3 destinations x 3 tiers" itinerary call
 // ---------------------------------------------------------------------
@@ -144,6 +178,13 @@ app.post('/api/generate', async (req, res) => {
     const { promptText, budgetLabel, nights, travelers, excludeDestinations, tags, lang } = req.body || {};
     if (!promptText || !nights || !travelers) {
       return res.status(400).json({ error: 'promptText, nights et travelers sont requis.' });
+    }
+
+    const useCache = !excludeDestinations || !excludeDestinations.length;
+    const cacheKey = useCache ? cacheKeyFor({ promptText, budgetLabel, nights, travelers, tags, lang }) : null;
+    if (cacheKey) {
+      const cached = db.getCachedGeneration(cacheKey);
+      if (cached) return res.json(cached);
     }
 
     const tierSchema =
@@ -174,6 +215,7 @@ app.post('/api/generate', async (req, res) => {
         if (!parsed.destinations || !parsed.destinations.length) throw new Error('Réponse incomplète');
         parsed.destinations = parsed.destinations.filter(d => d.tiers && d.tiers.length >= 3).slice(0, 3);
         if (!parsed.destinations.length) throw new Error('Réponse incomplète');
+        if (cacheKey) db.setCachedGeneration(cacheKey, parsed, GENERATION_CACHE_TTL_MS);
         return res.json(parsed);
       } catch (err) {
         lastErr = err;
@@ -447,6 +489,25 @@ app.post('/api/email-itinerary', emailLimiter, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(502).json({ error: 'Envoi de l\'email indisponible pour le moment.', detail: String(err.message || err) });
+  }
+});
+
+// ---------------------------------------------------------------------
+// /api/export-pdf — same tier data as the email/txt export, as a PDF.
+// ---------------------------------------------------------------------
+
+app.post('/api/export-pdf', (req, res) => {
+  try {
+    const { destinationFull, tier, nights, travelers, lang } = req.body || {};
+    if (!destinationFull || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
+
+    const filename = (destinationFull || 'sejour').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-') + '.pdf';
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
+    buildItineraryPdf({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1, lang }, res);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Export PDF indisponible pour le moment.' });
   }
 });
 

@@ -191,10 +191,12 @@
       <aside class="detail-side">
         <div class="detail-price" id="detailPrice"></div>
         <div class="detail-price-note" id="detailPriceNote"></div>
+        <div class="price-breakdown" id="priceBreakdown"></div>
         <a class="book-btn" id="detailBookBtn" target="_blank" rel="noopener" data-i18n="bookHotel">Réserver l'hôtel sur Booking.com</a>
         <a class="book-btn secondary" id="detailFlightsBtn" target="_blank" rel="noopener" data-i18n="searchFlights">Chercher les vols</a>
         <button class="book-btn ghost" id="detailShareBtn" type="button" data-i18n="shareBtn">Partager ce séjour</button>
         <button class="book-btn ghost" id="detailExportBtn" type="button" data-i18n="downloadBtn">Télécharger en .txt</button>
+        <button class="book-btn ghost" id="detailPdfBtn" type="button" data-i18n="downloadPdfBtn">Télécharger en PDF</button>
         <div class="share-confirm" id="shareConfirm"></div>
 
         <div class="refine-box">
@@ -241,6 +243,22 @@
     if(!res.ok) throw new Error(data.error || ('Erreur serveur (' + res.status + ')'));
     return data;
   }
+
+  // --- Analytics (optional, off by default) -------------------------------
+  // Plausible only — no Google Analytics, no cookies. /api/config reports
+  // whether the server has ANALYTICS_DOMAIN set; if not, this is a no-op
+  // and trackEvent() below silently does nothing.
+  function trackEvent(name, props){
+    if(typeof window.plausible === 'function') window.plausible(name, props ? { props: props } : undefined);
+  }
+  fetch('/api/config').then(function(r){ return r.json(); }).then(function(cfg){
+    if(!cfg || !cfg.analyticsDomain) return;
+    const script = document.createElement('script');
+    script.defer = true;
+    script.dataset.domain = cfg.analyticsDomain;
+    script.src = 'https://plausible.io/js/script.js';
+    document.head.appendChild(script);
+  }).catch(function(){ /* analytics is best-effort, never block the app */ });
 
   // --- i18n (FR/EN) --------------------------------------------------------
   // Dictionary + t()/getLang()/setLang() come from i18n.js, loaded before
@@ -564,6 +582,33 @@
   let currentItinerary = null;
   let currentNights = 6, currentTravelers = 2, currentPromptText = '';
 
+  // The AI only gives us a hotel-per-night price and one lump total — it
+  // never breaks out flights vs. activities/food. This is a deliberately
+  // labeled ESTIMATE (see "Répartition indicative"), not real data: hotel
+  // cost is exact (pricePerNight × nights), the remainder is split with a
+  // rough flights/other ratio just to give a sense of scale.
+  function renderPriceBreakdown(tier, nights){
+    const hotelCost = Math.min(tier.hotel.pricePerNight * (nights || 1), tier.estimatedTotal);
+    const remaining = Math.max(tier.estimatedTotal - hotelCost, 0);
+    const flightsCost = Math.round(remaining * 0.55);
+    const otherCost = remaining - flightsCost;
+    const total = tier.estimatedTotal || 1;
+    const segments = [
+      { label: t('breakdownHotel'), amount: hotelCost, color: 'var(--blue-deep)' },
+      { label: t('breakdownFlights'), amount: flightsCost, color: 'var(--green-deep)' },
+      { label: t('breakdownOther'), amount: otherCost, color: 'var(--text-mute)' }
+    ];
+    const bar = segments.map(function(seg){
+      return '<div style="width:' + Math.max(seg.amount / total * 100, 2) + '%;background:' + seg.color + ';"></div>';
+    }).join('');
+    const legend = segments.map(function(seg){
+      return '<div class="price-breakdown-row"><span class="price-breakdown-dot" style="background:' + seg.color + ';"></span>' +
+        '<span>' + seg.label + '</span><span class="price-breakdown-amount">' + seg.amount + '€</span></div>';
+    }).join('');
+    return '<div class="price-breakdown-title">' + t('breakdownTitle') + '</div>' +
+      '<div class="price-breakdown-bar">' + bar + '</div>' +
+      '<div class="price-breakdown-legend">' + legend + '</div>';
+  }
 
   function renderTierBody(dest, tier, destination){
     return '' +
@@ -755,6 +800,7 @@
     goBtn.textContent = t('goBtn');
 
     if(!usedFallback){
+      trackEvent('Generate', { destinations: names.join(', '), budget: budgetLabelFor(budgetKey), lang: window.getLang() });
       callBackend('/history', {
         sessionId: sessionId, promptText: raw, tags: [...activeTags], budgetLabel: budgetLabelFor(budgetKey),
         nights: nights, travelers: travelers, destination: names.join(' / ')
@@ -969,6 +1015,7 @@
     document.getElementById('detailMeta').textContent = currentNights + ' ' + t('nightsWord') + ' · ' + currentTravelers + ' ' + (currentTravelers>1 ? t('travelerWordPlural') : t('travelerWord')) + ' · ' + t('detailMetaHotel', { name: tier.hotel.name });
     document.getElementById('detailPrice').textContent = tier.estimatedTotal + '€';
     document.getElementById('detailPriceNote').textContent = t('detailPriceNote', { price: tier.hotel.pricePerNight });
+    document.getElementById('priceBreakdown').innerHTML = renderPriceBreakdown(tier, currentNights);
     document.getElementById('detailBookBtn').href = bookingUrl(currentDestinationFull);
     document.getElementById('detailFlightsBtn').href = flightsUrl(currentDestinationFull);
     document.getElementById('detailMapFrame').src = mapEmbedUrl(currentDestinationFull);
@@ -1091,6 +1138,41 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  });
+
+  const detailPdfBtn = document.getElementById('detailPdfBtn');
+  detailPdfBtn.addEventListener('click', async function(){
+    if(!currentTier) return;
+    const originalLabel = detailPdfBtn.textContent;
+    detailPdfBtn.disabled = true;
+    detailPdfBtn.textContent = '…';
+    try{
+      const res = await fetch('/api/export-pdf', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          destinationFull: currentDestinationFull, tier: currentTier,
+          nights: currentNights, travelers: currentTravelers, lang: window.getLang()
+        })
+      });
+      if(!res.ok) throw new Error('PDF export failed');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'peacetrip-' + (currentDestinationFull||'sejour').toLowerCase().replace(/[^a-z0-9]+/g,'-') + '.pdf';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }catch(err){
+      console.error(err);
+      shareConfirm.textContent = t('pdfError');
+      setTimeout(function(){ shareConfirm.textContent = ''; }, 4000);
+    }finally{
+      detailPdfBtn.disabled = false;
+      detailPdfBtn.textContent = originalLabel;
+    }
   });
 
   const emailToggleBtn = document.getElementById('emailToggleBtn');

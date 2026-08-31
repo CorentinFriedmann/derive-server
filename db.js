@@ -57,6 +57,14 @@ db.exec(`
     created_at          INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_email_captures_email ON email_captures(email);
+
+  CREATE TABLE IF NOT EXISTS generation_cache (
+    cache_key   TEXT PRIMARY KEY,
+    payload     TEXT NOT NULL,
+    created_at  INTEGER NOT NULL,
+    expires_at  INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_generation_cache_expires ON generation_cache(expires_at);
 `);
 
 // --- Soft migration: add user_id to trips/history without touching
@@ -188,8 +196,32 @@ function insertEmailCapture(email, destination, marketingConsent) {
   return id;
 }
 
+// --- Generation cache -----------------------------------------------------
+// Avoids re-paying for a Claude call when the same (normalized) request
+// comes in again within 24h — see cacheKeyFor() in server.js for what goes
+// into the key. Expired rows are swept lazily (on read) rather than via a
+// cron job, which is enough at this scale.
+
+function getCachedGeneration(cacheKey) {
+  const row = db.prepare('SELECT payload, expires_at AS expiresAt FROM generation_cache WHERE cache_key = ?').get(cacheKey);
+  if (!row) return null;
+  if (row.expiresAt < Date.now()) {
+    db.prepare('DELETE FROM generation_cache WHERE cache_key = ?').run(cacheKey);
+    return null;
+  }
+  try { return JSON.parse(row.payload); } catch (_e) { return null; }
+}
+
+function setCachedGeneration(cacheKey, payload, ttlMs) {
+  const now = Date.now();
+  db.prepare(
+    `INSERT INTO generation_cache (cache_key, payload, created_at, expires_at) VALUES (?, ?, ?, ?)
+     ON CONFLICT(cache_key) DO UPDATE SET payload = excluded.payload, created_at = excluded.created_at, expires_at = excluded.expires_at`
+  ).run(cacheKey, JSON.stringify(payload), now, now + ttlMs);
+}
+
 module.exports = {
   listTrips, insertTrip, deleteTrip, listHistory, insertHistory,
   createUser, findUserByEmail, findUserById, migrateGuestData,
-  insertEmailCapture
+  insertEmailCapture, getCachedGeneration, setCachedGeneration
 };
