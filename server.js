@@ -5,21 +5,19 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const cookieParser = require('cookie-parser');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const rateLimit = require('express-rate-limit');
 const db = require('./db');
+const { askClaude, parseJsonLenient } = require('./lib/claude');
+const { renderDestinationPage } = require('./lib/destinationPage');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-
-const API_KEY = process.env.ANTHROPIC_API_KEY;
-if (!API_KEY) {
-  console.warn('⚠️  ANTHROPIC_API_KEY manquante dans .env — les appels de génération échoueront tant qu\'elle n\'est pas définie.');
-}
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
@@ -126,88 +124,6 @@ app.post('/api/auth/logout', (req, res) => {
 app.get('/api/auth/me', (req, res) => {
   res.json({ user: req.user || null });
 });
-
-// ---------------------------------------------------------------------
-// Claude API call + the same lenient JSON parsing used in the prototype
-// (kept here because it's the server that now owns the raw model output).
-// ---------------------------------------------------------------------
-
-async function askClaude(systemPrompt, userMsg, maxTokens) {
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': API_KEY,
-      'anthropic-version': '2023-06-01'
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-6',
-      max_tokens: maxTokens || 1000,
-      system: systemPrompt,
-      messages: [{ role: 'user', content: userMsg }]
-    })
-  });
-  if (!response.ok) {
-    const errText = await response.text().catch(() => '');
-    throw new Error('Anthropic API ' + response.status + ': ' + errText.slice(0, 300));
-  }
-  const data = await response.json();
-  const textBlocks = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
-  return textBlocks.replace(/```json|```/g, '').trim();
-}
-
-function repairInternalQuotes(text) {
-  let out = '';
-  let inString = false;
-  for (let i = 0; i < text.length; i++) {
-    const c = text[i];
-    if (c === '"' && text[i - 1] !== '\\') {
-      if (!inString) {
-        inString = true;
-        out += c;
-      } else {
-        let j = i + 1;
-        while (j < text.length && /\s/.test(text[j])) j++;
-        const next = text[j];
-        const closesString = next === ',' || next === '}' || next === ']' || next === ':' || j >= text.length;
-        if (closesString) { inString = false; out += c; }
-        else { out += '\\"'; }
-      }
-    } else {
-      out += c;
-    }
-  }
-  return out;
-}
-
-function parseJsonLenient(text) {
-  let s = text.trim();
-  const start = s.indexOf('{');
-  const end = s.lastIndexOf('}');
-  if (start !== -1 && end !== -1 && end > start) s = s.slice(start, end + 1);
-
-  const candidates = [s, repairInternalQuotes(s)];
-  let firstError = null;
-  for (const candidate of candidates) {
-    try { return JSON.parse(candidate); }
-    catch (e1) {
-      if (!firstError) firstError = e1;
-      const repaired = candidate.replace(/,(\s*[\]}])/g, '$1');
-      try { return JSON.parse(repaired); }
-      catch (e2) {
-        const lastGoodArrayEnd = Math.max(repaired.lastIndexOf('},'), repaired.lastIndexOf('"],'));
-        if (lastGoodArrayEnd > -1) {
-          let salvage = repaired.slice(0, lastGoodArrayEnd + 1);
-          const openBraces = (salvage.match(/{/g) || []).length - (salvage.match(/}/g) || []).length;
-          const openBrackets = (salvage.match(/\[/g) || []).length - (salvage.match(/\]/g) || []).length;
-          salvage += ']'.repeat(Math.max(openBrackets, 0)) + '}'.repeat(Math.max(openBraces, 0));
-          try { return JSON.parse(salvage); } catch (e3) { /* try next candidate */ }
-        }
-      }
-    }
-  }
-  throw firstError;
-}
 
 // ---------------------------------------------------------------------
 // /api/generate — the main "3 destinations x 3 tiers" itinerary call
@@ -444,6 +360,37 @@ app.post('/api/history', (req, res) => {
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
   db.insertHistory(identity, entry);
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------
+// /destinations/:slug — server-rendered SEO pages, and /sitemap.xml.
+// Content comes from content/destinations.json, written ahead of time by
+// scripts/generate-destinations.js (one Claude call per destination, run
+// manually/periodically) — never generated on the fly per visitor. Loaded
+// once at startup; re-run the script + restart the server to refresh it.
+// ---------------------------------------------------------------------
+
+const DESTINATIONS_PATH = path.join(__dirname, 'content', 'destinations.json');
+let destinationsCache = {};
+try {
+  destinationsCache = JSON.parse(fs.readFileSync(DESTINATIONS_PATH, 'utf8'));
+} catch (_e) {
+  console.warn('⚠️  content/destinations.json introuvable ou invalide — /destinations/:slug renverra 404 pour tout le monde. Lance node scripts/generate-destinations.js.');
+}
+
+app.get('/destinations/:slug', (req, res) => {
+  const dest = destinationsCache[req.params.slug];
+  if (!dest) return res.status(404).type('html').send('<p>Page de destination introuvable. <a href="/">Retour à Peacetrip</a>.</p>');
+  const baseUrl = req.protocol + '://' + req.get('host');
+  res.type('html').send(renderDestinationPage(dest, baseUrl));
+});
+
+app.get('/sitemap.xml', (req, res) => {
+  const baseUrl = req.protocol + '://' + req.get('host');
+  const urls = [baseUrl + '/'].concat(Object.keys(destinationsCache).map(slug => baseUrl + '/destinations/' + slug));
+  const xml = '<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    urls.map(u => '  <url><loc>' + u + '</loc></url>').join('\n') + '\n</urlset>\n';
+  res.type('application/xml').send(xml);
 });
 
 const PORT = process.env.PORT || 3000;

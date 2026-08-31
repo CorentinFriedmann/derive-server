@@ -1,0 +1,414 @@
+{
+  "naples": {
+    "slug": "naples",
+    "name": "Golfe de Naples",
+    "country": "Italie",
+    "tagline": "Volcans, ruines antiques et côte vertigineuse au sud de Rome.",
+    "description": [
+      "Le Golfe de Naples concentre sur quelques kilomètres des contrastes saisissants : la ville bruyante et baroque de Naples, les ruines figées de Pompéi, les falaises de Positano et l'île de Capri suspendue entre mer et ciel. Un territoire dense, exigeant, qui récompense ceux qui s'y plongent vraiment.",
+      "La cuisine napolitaine - pizza, frittura, sfogliatelle - est ici dans son contexte d'origine. Les transports maritimes relient facilement les sites. Mieux vaut prévoir une base fixe et rayonner : la région se découvre par étapes, en acceptant la chaleur, la foule et l'énergie particulière du Sud italien."
+    ],
+    "metaDescription": "Guide voyage pour le Golfe de Naples : Naples, Pompéi, Capri et Positano. Budgets, hôtels, activités et restaurants pour 6 nuits.",
+    "tiers": [
+      {
+        "key": "low",
+        "label": "Essentiel",
+        "hotel": {
+          "name": "Spaccanapoli B&B, Naples centro storico",
+          "pricePerNight": 75
+        },
+        "activities": [
+          "Pizza chez Di Matteo",
+          "Visite de Pompéi",
+          "Ferry Capri aller-retour"
+        ],
+        "restaurants": [
+          {
+            "name": "L'Antica Pizzeria da Michele",
+            "address": "Via Cesare Sersale 1, Naples"
+          },
+          {
+            "name": "Trattoria da Nennella",
+            "address": "Vico Lungo Teatro Nuovo 103, Naples"
+          }
+        ],
+        "estimatedTotal": 1650
+      },
+      {
+        "key": "mid",
+        "label": "Confort",
+        "hotel": {
+          "name": "Hotel Palazzo Decumani, Naples",
+          "pricePerNight": 145
+        },
+        "activities": [
+          "Visite guidée de Pompéi",
+          "Musée Archéologique de Naples",
+          "Téléphérique et tour de Capri",
+          "Randonnée Sentiero degli Dei"
+        ],
+        "restaurants": [
+          {
+            "name": "Ristorante Europeo di Mattozzi",
+            "address": "Via Marchese Campodisola 4, Naples"
+          },
+          {
+            "name": "Lo Guarracino",
+            "address": "Via Positanesi d'America 12, Positano"
+          },
+          {
+            "name": "Il Geranio",
+            "address": "Via Longano 1, Capri"
+          }
+        ],
+        "estimatedTotal": 2950
+      },
+      {
+        "key": "high",
+        "label": "Signature",
+        "hotel": {
+          "name": "Le Sirenuse, Positano",
+          "pricePerNight": 650
+        },
+        "activities": [
+          "Visite privée de Pompéi at dawn",
+          "Excursion en bateau Capri-Amalfi",
+          "Grotte Azzurra en matinée",
+          "Cours de cuisine napolitaine",
+          "Helicopter Naples-Capri",
+          "Dégustation vins du Vésuve"
+        ],
+        "restaurants": [
+          {
+            "name": "Il Comandante",
+            "address": "Via Partenope 45, Naples"
+          },
+          {
+            "name": "La Sponda",
+            "address": "Via Cristoforo Colombo 30, Positano"
+          },
+          {
+            "name": "Da Paolino",
+            "address": "Via Palazzo a Mare 11, Capri"
+          },
+          {
+            "name": "Ristorante Rossellinis",
+            "address": "Via San Giovanni del Toro 28, Ravello"
+          }
+        ],
+        "estimatedTotal": 8200
+      }
+    ],
+    "generatedAt": "2026-08-31T14:35:39.907Z"
+  },
+  "calanques": {
+    "slug": "calanques",
+    "name": "Les Calanques",
+    "country": "France",
+    "tagline": "Falaises calcaires, criques turquoise et sentiers entre mer et garrigue.",
+    "description": [
+      "Entre Marseille et Cassis, le parc national des Calanques offre un littoral découpé de falaises blanches plongeant dans des eaux claires. À pied, en kayak ou en bateau, chaque crique révèle une lumière particulière selon l'heure et la saison.",
+      "La base de vie reste Marseille, ville dense et vivante, avec son marché aux poissons, ses quartiers contrastés et sa cuisine directe. Les Calanques sont accessibles en une heure depuis le centre-ville, ce qui permet de mêler nature et urbanité sans effort."
+    ],
+    "metaDescription": "Informations pratiques pour visiter les Calanques près de Marseille : hébergements, activités, restaurants et budgets pour 6 nuits à 2.",
+    "tiers": [
+      {
+        "key": "low",
+        "label": "Essentiel",
+        "hotel": {
+          "name": "Hôtel Ibis Marseille Centre Vieux-Port",
+          "pricePerNight": 90
+        },
+        "activities": [
+          "Sentier des Calanques à pied",
+          "Baignade à Sormiou",
+          "Vieux-Port et marché aux poissons"
+        ],
+        "restaurants": [
+          {
+            "name": "Chez Jeannot",
+            "address": "129 Rue du Vallon des Auffes, Marseille"
+          },
+          {
+            "name": "La Boîte à Sardine",
+            "address": "2 Bd de la Libération, Marseille"
+          }
+        ],
+        "estimatedTotal": 1350
+      },
+      {
+        "key": "mid",
+        "label": "Confort",
+        "hotel": {
+          "name": "Hôtel Mama Shelter Marseille",
+          "pricePerNight": 160
+        },
+        "activities": [
+          "Balade en kayak de mer",
+          "Calanque d'En-Vau en barque",
+          "Visite du MuCEM",
+          "Randonnée Luminy - Morgiou"
+        ],
+        "restaurants": [
+          {
+            "name": "Le Malthazar",
+            "address": "19 Rue Fortia, Marseille"
+          },
+          {
+            "name": "Péron",
+            "address": "56 Corniche J.-F. Kennedy, Marseille"
+          },
+          {
+            "name": "La Poissonnerie de Pascal",
+            "address": "10 Rue Saint-Saëns, Marseille"
+          }
+        ],
+        "estimatedTotal": 2400
+      },
+      {
+        "key": "high",
+        "label": "Signature",
+        "hotel": {
+          "name": "Hôtel Les Roches Blanches, Cassis",
+          "pricePerNight": 360
+        },
+        "activities": [
+          "Sortie voilier privé aux Calanques",
+          "Plongée sur récifs de Marseille",
+          "Dégustation vins Cassis AOC",
+          "Randonnée guidée Calanque de Port-Pin",
+          "Spa et accès piscine à débordement",
+          "Excursion Îles du Frioul"
+        ],
+        "restaurants": [
+          {
+            "name": "Le Petit Nice - Passédat",
+            "address": "17 Rue des Braves, Marseille"
+          },
+          {
+            "name": "La Villa Madie",
+            "address": "Anse de Corton, Cassis"
+          },
+          {
+            "name": "Esplanade",
+            "address": "2 Quai des Baux, Cassis"
+          },
+          {
+            "name": "AM par Alexandre Mazzia",
+            "address": "9 Rue François Rocca, Marseille"
+          }
+        ],
+        "estimatedTotal": 5800
+      }
+    ],
+    "generatedAt": "2026-08-31T14:35:58.510Z"
+  },
+  "lisbonne": {
+    "slug": "lisbonne",
+    "name": "Lisbonne",
+    "country": "Portugal",
+    "tagline": "Sept collines, azulejos et lumière dorée sur le Tage",
+    "description": [
+      "Lisbonne déroule ses quartiers historiques entre collines et estuaire, avec ses tramways qui grincent dans les ruelles pavées d'Alfama. La ville conjugue fado mélancolique, architecture mauresque et effervescence gastronomique sans jamais perdre son caractère populaire.",
+      "Le Tage façonne la ville autant que ses habitants : terrasses ouvertes sur l'eau, marchés animés, miradouros où la lumière de fin de journée prend une teinte particulière. Lisbonne se vit à pied, lentement, entre pastel de nata et verre de vin verde."
+    ],
+    "metaDescription": "Lisbonne : quartiers historiques, tramways, fado et gastronomie au bord du Tage. Guide pratique pour organiser votre séjour au Portugal.",
+    "tiers": [
+      {
+        "key": "low",
+        "label": "Essentiel",
+        "hotel": {
+          "name": "Lisbon Lounge Hostel",
+          "pricePerNight": 55
+        },
+        "activities": [
+          "Balade à Alfama",
+          "Miradouro da Graça",
+          "Musée national des Azulejos",
+          "Belvédère de Santa Catarina"
+        ],
+        "restaurants": [
+          {
+            "name": "Tasca do Chico",
+            "address": "Rua do Diário de Notícias 39, Bairro Alto"
+          },
+          {
+            "name": "A Cevicheria",
+            "address": "Rua Dom Pedro V 129, Príncipe Real"
+          }
+        ],
+        "estimatedTotal": 1350
+      },
+      {
+        "key": "mid",
+        "label": "Confort",
+        "hotel": {
+          "name": "Hotel do Chiado",
+          "pricePerNight": 140
+        },
+        "activities": [
+          "Tramway 28 complet",
+          "Sintra en journée",
+          "Visite du Château São Jorge",
+          "LX Factory le dimanche",
+          "Croisière sur le Tage"
+        ],
+        "restaurants": [
+          {
+            "name": "Solar dos Presuntos",
+            "address": "Rua das Portas de Santo Antão 150"
+          },
+          {
+            "name": "Taberna da Rua das Flores",
+            "address": "Rua das Flores 103, Chiado"
+          },
+          {
+            "name": "Zé da Mouraria",
+            "address": "Rua João do Outeiro 24, Mouraria"
+          }
+        ],
+        "estimatedTotal": 2600
+      },
+      {
+        "key": "high",
+        "label": "Signature",
+        "hotel": {
+          "name": "Bairro Alto Hotel",
+          "pricePerNight": 420
+        },
+        "activities": [
+          "Tour privé des azulejos",
+          "Excursion Setúbal et Arrábida",
+          "Dégustation de vins de l'Alentejo",
+          "Fado en loge au Clube de Fado",
+          "Visite privée du Musée Calouste Gulbenkian",
+          "Cours de cuisine portugaise"
+        ],
+        "restaurants": [
+          {
+            "name": "Belcanto",
+            "address": "Rua Serpa Pinto 10A, Chiado"
+          },
+          {
+            "name": "Alma",
+            "address": "Rua Anchieta 15, Chiado"
+          },
+          {
+            "name": "Loco",
+            "address": "Rua dos Navegantes 53, Madragoa"
+          },
+          {
+            "name": "Tasca do Chico",
+            "address": "Rua do Diário de Notícias 39, Bairro Alto"
+          }
+        ],
+        "estimatedTotal": 5800
+      }
+    ],
+    "generatedAt": "2026-08-31T14:36:14.566Z"
+  },
+  "santorin": {
+    "slug": "santorin",
+    "name": "Santorin",
+    "country": "Grèce",
+    "tagline": "Caldeira volcanique, maisons blanches et couchers de soleil francs",
+    "description": [
+      "Santorin est une île en arc née d'une éruption massive il y a 3 600 ans. Ses villages perchés sur la caldeira, ses plages de sable noir et rouge, et son vin local produit sur sols volcaniques en font une destination à la géographie vraiment singulière.",
+      "Au-delà des cartes postales d'Oia, l'île réserve des ruines minoennes à Akrotiri, des sentiers de randonnée entre Fira et Oia, et une scène gastronomique ancrée dans les produits égéens. La foule estivale est dense : mieux vaut viser mai ou septembre."
+    ],
+    "metaDescription": "Guide voyage Santorin : hôtels, activités, restaurants et budgets pour 6 nuits à 2. Île volcanique grecque, caldeira et villages blancs.",
+    "tiers": [
+      {
+        "key": "low",
+        "label": "Essentiel",
+        "hotel": {
+          "name": "Galini Pension, Fira",
+          "pricePerNight": 75
+        },
+        "activities": [
+          "Randonnée Fira-Oia",
+          "Site archéologique Akrotiri",
+          "Plage de Kamari",
+          "Musée préhistorique Fira"
+        ],
+        "restaurants": [
+          {
+            "name": "Metaxy Mas",
+            "address": "Exo Gonia, Santorin"
+          },
+          {
+            "name": "Argo Restaurant",
+            "address": "Odós Ypapantis, Fira"
+          }
+        ],
+        "estimatedTotal": 2100
+      },
+      {
+        "key": "mid",
+        "label": "Confort",
+        "hotel": {
+          "name": "Aressana Spa Hotel, Fira",
+          "pricePerNight": 160
+        },
+        "activities": [
+          "Croisière caldeira au coucher du soleil",
+          "Site archéologique Akrotiri",
+          "Dégustation de vins Santo Wines",
+          "Randonnée Fira-Oia",
+          "Plage de Perissa"
+        ],
+        "restaurants": [
+          {
+            "name": "Metaxy Mas",
+            "address": "Exo Gonia, Santorin"
+          },
+          {
+            "name": "Roka Restaurant",
+            "address": "Odós Ypapantis, Fira"
+          },
+          {
+            "name": "Aktaion",
+            "address": "Place centrale, Pyrgos"
+          }
+        ],
+        "estimatedTotal": 3800
+      },
+      {
+        "key": "high",
+        "label": "Signature",
+        "hotel": {
+          "name": "Grace Hotel Auberge, Imerovigli",
+          "pricePerNight": 480
+        },
+        "activities": [
+          "Croisière privée caldeira",
+          "Dégustation Domaine Sigalas",
+          "Cours de cuisine grecque",
+          "Site Akrotiri avec guide privé",
+          "Héliport transfer Athènes-Santorin",
+          "Spa avec vue caldeira"
+        ],
+        "restaurants": [
+          {
+            "name": "Selene",
+            "address": "Pyrgos, Santorin"
+          },
+          {
+            "name": "Lauda by Lefteris Lazarou",
+            "address": "Oia, Santorin"
+          },
+          {
+            "name": "Roka Restaurant",
+            "address": "Odós Ypapantis, Fira"
+          },
+          {
+            "name": "1800 Restaurant",
+            "address": "Rue principale, Oia"
+          }
+        ],
+        "estimatedTotal": 8200
+      }
+    ],
+    "generatedAt": "2026-08-31T14:36:29.618Z"
+  }
+}
