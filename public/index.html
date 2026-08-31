@@ -47,6 +47,12 @@
   .nav-links a{text-decoration:none;transition:color .2s;}
   .nav-links a:hover{color:var(--text);}
   .nav-badge{font-family:var(--mono);font-size:0.72rem;background:var(--bg-panel);border:1px solid var(--border);padding:4px 10px;border-radius:100px;color:var(--green-deep);}
+  .nav-auth{font-family:var(--sans);font-size:0.92rem;background:none;border:none;color:var(--text-soft);cursor:pointer;padding:0;}
+  .nav-auth:hover{color:var(--text);}
+  .nav-auth-user{display:inline-flex;align-items:center;gap:10px;font-size:0.88rem;color:var(--text-soft);}
+  .nav-auth-user .email{color:var(--text);max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .nav-auth-user button{font-family:var(--sans);font-size:0.82rem;background:none;border:none;color:var(--text-soft);cursor:pointer;text-decoration:underline;text-underline-offset:2px;padding:0;}
+  .nav-auth-user button:hover{color:var(--blue-deep);}
 
   .hero{position:relative;padding:56px 0 40px;overflow:hidden;}
   .hero-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr 0.9fr;gap:48px;align-items:center;}
@@ -221,6 +227,25 @@
   footer .foot-brand{font-family:var(--serif);font-size:1.1rem;}
   footer .foot-note{font-size:0.82rem;color:var(--text-soft);max-width:44ch;}
 
+  /* AUTH MODAL */
+  .auth-overlay{
+    position:fixed;inset:0;background:rgba(14,42,61,0.55);backdrop-filter:blur(3px);
+    display:none;align-items:center;justify-content:center;z-index:200;padding:20px;
+  }
+  .auth-overlay.show{display:flex;}
+  .auth-panel{background:var(--bg);border:1px solid var(--border);border-radius:18px;max-width:380px;width:100%;padding:32px 28px 26px;position:relative;}
+  .auth-tabs{display:flex;gap:4px;margin-bottom:22px;background:var(--bg-panel);border-radius:100px;padding:3px;}
+  .auth-tab{flex:1;font-family:var(--sans);font-size:0.85rem;padding:8px;border-radius:100px;border:none;background:transparent;color:var(--text-soft);cursor:pointer;}
+  .auth-tab.active{background:var(--blue);color:var(--on-accent);font-weight:600;}
+  #authForm label{display:block;font-family:var(--mono);font-size:0.7rem;text-transform:uppercase;letter-spacing:0.06em;color:var(--text-soft);margin-bottom:16px;}
+  #authForm input{display:block;width:100%;margin-top:6px;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-family:var(--sans);font-size:0.92rem;color:var(--text);background:var(--bg-panel);}
+  #authForm input:focus{outline:2px solid var(--green);outline-offset:1px;}
+  #authSubmit{width:100%;margin-top:2px;}
+  .auth-msg{font-size:0.8rem;margin-top:10px;min-height:1em;}
+  .auth-msg.error{color:var(--blue-deep);}
+  .auth-msg.ok{color:var(--green-deep);}
+  .auth-note{font-size:0.74rem;color:var(--text-mute);margin:16px 0 0;text-align:center;}
+
   /* DETAIL OVERLAY */
   .detail-overlay{
     position:fixed;inset:0;background:rgba(14,42,61,0.55);backdrop-filter:blur(3px);
@@ -300,6 +325,7 @@
     <a href="#panel">Composer</a>
     <a href="#saved">Mes voyages <span class="nav-badge" id="savedCount">0</span></a>
     <a href="#how">Comment ça marche</a>
+    <span id="navAuthSlot"><button class="nav-auth" id="navAuthBtn" type="button">Se connecter</button></span>
   </div>
 </nav>
 
@@ -414,7 +440,7 @@
   <div class="honesty-box">
     <h4>Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
     <p><strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.</p>
-    <p><strong>Important :</strong> cet identifiant n'est PAS un compte avec mot de passe — il n'y a pas encore de connexion. Si vous videz les données de ce navigateur ou changez d'appareil, vous perdez l'accès à cet historique. Une vraie authentification (email, Google...) est l'étape suivante avant un vrai lancement public.</p>
+    <p><strong>Compte :</strong> créer un compte (email + mot de passe) est optionnel — sans compte, vos séjours et votre historique restent liés à cet identifiant de navigateur, et vous les perdez si vous videz les données du navigateur ou changez d'appareil. Avec un compte, vos séjours déjà sauvegardés dans ce navigateur sont automatiquement rattachés à votre compte, et retrouvables en vous reconnectant depuis n'importe quel appareil. Les mots de passe sont hashés (jamais stockés en clair) ; il n'y a pas encore de récupération de mot de passe oublié ni de connexion via Google/autre.</p>
     <p><strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) demanderait de stocker l'itinéraire à une adresse dédiée — pas encore construit.</p>
     <p><strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
   </div>
@@ -424,6 +450,24 @@
   <div class="foot-brand">Peacetrip</div>
   <div class="foot-note">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
 </footer>
+
+<!-- AUTH MODAL -->
+<div class="auth-overlay" id="authOverlay">
+  <div class="auth-panel">
+    <button class="detail-close" id="authClose" aria-label="Fermer la connexion">×</button>
+    <div class="auth-tabs">
+      <button class="auth-tab active" type="button" data-tab="login">Connexion</button>
+      <button class="auth-tab" type="button" data-tab="signup">Créer un compte</button>
+    </div>
+    <form id="authForm">
+      <label>Email<input type="email" id="authEmail" autocomplete="email" required></label>
+      <label>Mot de passe<input type="password" id="authPassword" autocomplete="current-password" minlength="8" required></label>
+      <button type="submit" class="go" id="authSubmit">Se connecter</button>
+      <div class="auth-msg" id="authMsg" role="status"></div>
+    </form>
+    <p class="auth-note">Un compte est optionnel — sans compte, vos séjours restent enregistrés dans ce navigateur seulement.</p>
+  </div>
+</div>
 
 <!-- DETAIL OVERLAY -->
 <div class="detail-overlay" id="detailOverlay">
@@ -484,6 +528,85 @@
     const data = await res.json().catch(function(){ return {}; });
     if(!res.ok) throw new Error(data.error || ('Erreur serveur (' + res.status + ')'));
     return data;
+  }
+
+  // --- Auth (optional account) -------------------------------------------
+  // A logged-in user is identified server-side by an httpOnly cookie — we
+  // never store the password or a token here, just a client-side mirror of
+  // { id, email } so the nav and trips/history know whether to treat this
+  // visitor as an account or a guest.
+  let currentUser = null;
+  const authOverlay = document.getElementById('authOverlay');
+  const authClose = document.getElementById('authClose');
+  const authForm = document.getElementById('authForm');
+  const authTabs = document.querySelectorAll('.auth-tab');
+  const authSubmit = document.getElementById('authSubmit');
+  const authMsg = document.getElementById('authMsg');
+  const navAuthSlot = document.getElementById('navAuthSlot');
+  let authMode = 'login';
+
+  function renderAuthNav(){
+    if(currentUser){
+      navAuthSlot.innerHTML = '<span class="nav-auth-user"><span class="email">' + currentUser.email + '</span><button type="button" id="navLogoutBtn">Se déconnecter</button></span>';
+    } else {
+      navAuthSlot.innerHTML = '<button class="nav-auth" id="navAuthBtn" type="button">Se connecter</button>';
+    }
+  }
+
+  function openAuth(mode){
+    authMode = mode || 'login';
+    authTabs.forEach(function(t){ t.classList.toggle('active', t.dataset.tab === authMode); });
+    authSubmit.textContent = authMode === 'signup' ? 'Créer mon compte' : 'Se connecter';
+    document.getElementById('authPassword').setAttribute('autocomplete', authMode === 'signup' ? 'new-password' : 'current-password');
+    authMsg.textContent = ''; authMsg.className = 'auth-msg';
+    authOverlay.classList.add('show');
+    document.getElementById('authEmail').focus();
+  }
+  function closeAuth(){ authOverlay.classList.remove('show'); authForm.reset(); }
+
+  navAuthSlot.addEventListener('click', function(e){
+    if(e.target.closest('#navAuthBtn')){ openAuth('login'); return; }
+    if(e.target.closest('#navLogoutBtn')){
+      callBackend('/auth/logout', {}).catch(function(){}).then(function(){
+        currentUser = null;
+        renderAuthNav();
+        renderSavedTrips();
+        renderHistory();
+      });
+    }
+  });
+  authClose.addEventListener('click', closeAuth);
+  authOverlay.addEventListener('click', function(e){ if(e.target === authOverlay) closeAuth(); });
+  authTabs.forEach(function(t){ t.addEventListener('click', function(){ openAuth(t.dataset.tab); }); });
+
+  authForm.addEventListener('submit', async function(e){
+    e.preventDefault();
+    const email = document.getElementById('authEmail').value.trim();
+    const password = document.getElementById('authPassword').value;
+    authSubmit.disabled = true;
+    authMsg.textContent = ''; authMsg.className = 'auth-msg';
+    try{
+      const data = await callBackend(authMode === 'signup' ? '/auth/signup' : '/auth/login', { email: email, password: password, sessionId: sessionId });
+      currentUser = data.user;
+      renderAuthNav();
+      closeAuth();
+      renderSavedTrips();
+      renderHistory();
+    }catch(err){
+      authMsg.textContent = err.message || 'Une erreur est survenue.';
+      authMsg.className = 'auth-msg error';
+    }finally{
+      authSubmit.disabled = false;
+    }
+  });
+
+  async function checkAuth(){
+    try{
+      const res = await fetch('/api/auth/me');
+      const data = await res.json();
+      currentUser = data.user || null;
+    }catch(_e){ currentUser = null; }
+    renderAuthNav();
   }
 
   const chipEls = document.querySelectorAll('.chip');
@@ -1015,6 +1138,7 @@
     URL.revokeObjectURL(url);
   });
 
+  checkAuth();
   renderSavedTrips();
   renderHistory();
   updateHint();

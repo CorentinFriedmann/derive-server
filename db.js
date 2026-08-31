@@ -41,6 +41,28 @@ db.exec(`
     created_at    INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_history_session ON history(session_id);
+
+  CREATE TABLE IF NOT EXISTS users (
+    id             TEXT PRIMARY KEY,
+    email          TEXT NOT NULL UNIQUE,
+    password_hash  TEXT NOT NULL,
+    created_at     INTEGER NOT NULL
+  );
+`);
+
+// --- Soft migration: add user_id to trips/history without touching
+// existing rows (SQLite has no "ADD COLUMN IF NOT EXISTS", so check first).
+function ensureColumn(table, column, ddl) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
+  if (!cols.includes(column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+  }
+}
+ensureColumn('trips', 'user_id', 'user_id TEXT');
+ensureColumn('history', 'user_id', 'user_id TEXT');
+db.exec(`
+  CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id);
+  CREATE INDEX IF NOT EXISTS idx_history_user ON history(user_id);
 `);
 
 const HISTORY_LIMIT = 8;
@@ -49,52 +71,103 @@ function newId() {
   return Date.now() + '_' + Math.random().toString(36).slice(2, 9);
 }
 
-// --- Trips -----------------------------------------------------------
+// An "identity" is { sessionId, userId }. userId (once logged in) always
+// takes priority over the anonymous sessionId. Guest rows are matched with
+// "user_id IS NULL" so that once a session's data is claimed by an account
+// (see migrateGuestData), the old anonymous id can no longer see it.
 
-function listTrips(sessionId) {
-  return db.prepare(
-    'SELECT id, name, meta, price, tier_label AS tierLabel, booking_href AS bookingHref, created_at AS savedAt FROM trips WHERE session_id = ? ORDER BY created_at DESC'
-  ).all(sessionId);
-}
+// --- Users -------------------------------------------------------------
 
-function insertTrip(sessionId, trip) {
+function createUser(email, passwordHash) {
   const id = newId();
-  db.prepare(
-    `INSERT INTO trips (id, session_id, name, meta, price, tier_label, booking_href, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(id, sessionId, trip.name || '', trip.meta || '', trip.price || '', trip.tierLabel || '', trip.bookingHref || '', Date.now());
+  db.prepare('INSERT INTO users (id, email, password_hash, created_at) VALUES (?, ?, ?, ?)')
+    .run(id, email, passwordHash, Date.now());
   return id;
 }
 
-function deleteTrip(sessionId, id) {
-  db.prepare('DELETE FROM trips WHERE session_id = ? AND id = ?').run(sessionId, id);
+function findUserByEmail(email) {
+  return db.prepare('SELECT id, email, password_hash AS passwordHash FROM users WHERE email = ?').get(email);
+}
+
+function findUserById(id) {
+  return db.prepare('SELECT id, email FROM users WHERE id = ?').get(id);
+}
+
+// Reattach a guest session's existing trips/history to a real account —
+// called right after signup and on every login, so nothing gets stranded
+// under the old browser-generated id.
+function migrateGuestData(sessionId, userId) {
+  if (!sessionId || !userId) return;
+  db.prepare('UPDATE trips SET user_id = ? WHERE session_id = ? AND user_id IS NULL').run(userId, sessionId);
+  db.prepare('UPDATE history SET user_id = ? WHERE session_id = ? AND user_id IS NULL').run(userId, sessionId);
+}
+
+// --- Trips -----------------------------------------------------------
+
+function listTrips(identity) {
+  if (identity.userId) {
+    return db.prepare(
+      'SELECT id, name, meta, price, tier_label AS tierLabel, booking_href AS bookingHref, created_at AS savedAt FROM trips WHERE user_id = ? ORDER BY created_at DESC'
+    ).all(identity.userId);
+  }
+  return db.prepare(
+    'SELECT id, name, meta, price, tier_label AS tierLabel, booking_href AS bookingHref, created_at AS savedAt FROM trips WHERE session_id = ? AND user_id IS NULL ORDER BY created_at DESC'
+  ).all(identity.sessionId);
+}
+
+function insertTrip(identity, trip) {
+  const id = newId();
+  db.prepare(
+    `INSERT INTO trips (id, session_id, user_id, name, meta, price, tier_label, booking_href, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+  ).run(id, identity.sessionId || newId(), identity.userId || null, trip.name || '', trip.meta || '', trip.price || '', trip.tierLabel || '', trip.bookingHref || '', Date.now());
+  return id;
+}
+
+function deleteTrip(identity, id) {
+  if (identity.userId) {
+    db.prepare('DELETE FROM trips WHERE user_id = ? AND id = ?').run(identity.userId, id);
+  } else {
+    db.prepare('DELETE FROM trips WHERE session_id = ? AND user_id IS NULL AND id = ?').run(identity.sessionId, id);
+  }
 }
 
 // --- Search history ----------------------------------------------------
 
-function listHistory(sessionId) {
-  return db.prepare(
-    'SELECT id, prompt_text AS promptText, tags, budget_label AS budgetLabel, nights, travelers, destination, created_at AS savedAt FROM history WHERE session_id = ? ORDER BY created_at DESC'
-  ).all(sessionId).map(row => ({ ...row, tags: JSON.parse(row.tags || '[]') }));
+function listHistory(identity) {
+  const rows = identity.userId
+    ? db.prepare(
+        'SELECT id, prompt_text AS promptText, tags, budget_label AS budgetLabel, nights, travelers, destination, created_at AS savedAt FROM history WHERE user_id = ? ORDER BY created_at DESC'
+      ).all(identity.userId)
+    : db.prepare(
+        'SELECT id, prompt_text AS promptText, tags, budget_label AS budgetLabel, nights, travelers, destination, created_at AS savedAt FROM history WHERE session_id = ? AND user_id IS NULL ORDER BY created_at DESC'
+      ).all(identity.sessionId);
+  return rows.map(row => ({ ...row, tags: JSON.parse(row.tags || '[]') }));
 }
 
-function insertHistory(sessionId, entry) {
+function insertHistory(identity, entry) {
   const id = newId();
+  const sessionId = identity.sessionId || newId();
   db.prepare(
-    `INSERT INTO history (id, session_id, prompt_text, tags, budget_label, nights, travelers, destination, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO history (id, session_id, user_id, prompt_text, tags, budget_label, nights, travelers, destination, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
-    id, sessionId, entry.promptText || '', JSON.stringify(entry.tags || []),
+    id, sessionId, identity.userId || null, entry.promptText || '', JSON.stringify(entry.tags || []),
     entry.budgetLabel || '', entry.nights || null, entry.travelers || null,
     entry.destination || '', Date.now()
   );
 
-  // Keep only the most recent HISTORY_LIMIT entries per session.
-  const all = db.prepare('SELECT id FROM history WHERE session_id = ? ORDER BY created_at DESC').all(sessionId);
+  // Keep only the most recent HISTORY_LIMIT entries per identity.
+  const all = identity.userId
+    ? db.prepare('SELECT id FROM history WHERE user_id = ? ORDER BY created_at DESC').all(identity.userId)
+    : db.prepare('SELECT id FROM history WHERE session_id = ? AND user_id IS NULL ORDER BY created_at DESC').all(sessionId);
   if (all.length > HISTORY_LIMIT) {
     const del = db.prepare('DELETE FROM history WHERE id = ?');
     all.slice(HISTORY_LIMIT).forEach(row => del.run(row.id));
   }
 }
 
-module.exports = { listTrips, insertTrip, deleteTrip, listHistory, insertHistory };
+module.exports = {
+  listTrips, insertTrip, deleteTrip, listHistory, insertHistory,
+  createUser, findUserByEmail, findUserById, migrateGuestData
+};

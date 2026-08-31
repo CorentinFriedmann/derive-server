@@ -5,16 +5,127 @@ require('dotenv').config();
 
 const express = require('express');
 const path = require('path');
+const cookieParser = require('cookie-parser');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
+const rateLimit = require('express-rate-limit');
 const db = require('./db');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const API_KEY = process.env.ANTHROPIC_API_KEY;
 if (!API_KEY) {
   console.warn('⚠️  ANTHROPIC_API_KEY manquante dans .env — les appels de génération échoueront tant qu\'elle n\'est pas définie.');
 }
+
+const SESSION_SECRET = process.env.SESSION_SECRET;
+if (!SESSION_SECRET) {
+  console.warn('⚠️  SESSION_SECRET manquante dans .env — les comptes utilisateurs échoueront tant qu\'elle n\'est pas définie.');
+}
+
+// ---------------------------------------------------------------------
+// Auth — real accounts (email + password), sitting ALONGSIDE the existing
+// anonymous sessionId rather than replacing it. A visitor without an
+// account still works exactly as before (see trips/history routes below);
+// logging in just gives req.user priority over the anonymous id.
+// ---------------------------------------------------------------------
+
+const AUTH_COOKIE = 'peacetrip_session';
+const AUTH_COOKIE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+
+function signAuthCookie(res, user) {
+  const token = jwt.sign({ sub: user.id, email: user.email }, SESSION_SECRET, { expiresIn: '30d' });
+  res.cookie(AUTH_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: AUTH_COOKIE_MAX_AGE_MS
+  });
+}
+
+// Runs on every request: if a valid auth cookie is present, attaches
+// req.user = { id, email }. Never blocks the request either way — routes
+// that require login check req.user themselves.
+app.use((req, res, next) => {
+  const token = req.cookies && req.cookies[AUTH_COOKIE];
+  if (token && SESSION_SECRET) {
+    try {
+      const payload = jwt.verify(token, SESSION_SECRET);
+      req.user = { id: payload.sub, email: payload.email };
+    } catch (_e) { /* expired/invalid cookie — treat as logged out */ }
+  }
+  next();
+});
+
+// Builds the { sessionId, userId } pair the db layer expects, from
+// whichever the request actually has.
+function identityFrom(req, bodyOrQuery) {
+  return { sessionId: bodyOrQuery.sessionId || null, userId: req.user ? req.user.id : null };
+}
+
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives — réessayez dans quelques minutes.' }
+});
+
+app.post('/api/auth/signup', authLimiter, async (req, res) => {
+  try {
+    const { email: rawEmail, password, sessionId } = req.body || {};
+    const email = String(rawEmail || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Adresse email invalide.' });
+    if (!password || password.length < 8) return res.status(400).json({ error: 'Le mot de passe doit contenir au moins 8 caractères.' });
+    if (db.findUserByEmail(email)) return res.status(409).json({ error: 'Un compte existe déjà avec cet email.' });
+
+    const passwordHash = await bcrypt.hash(password, 10);
+    const userId = db.createUser(email, passwordHash);
+    if (sessionId) db.migrateGuestData(sessionId, userId);
+
+    const user = { id: userId, email };
+    signAuthCookie(res, user);
+    res.json({ user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Impossible de créer le compte pour le moment.' });
+  }
+});
+
+app.post('/api/auth/login', authLimiter, async (req, res) => {
+  try {
+    const { email: rawEmail, password, sessionId } = req.body || {};
+    const email = String(rawEmail || '').trim().toLowerCase();
+    const row = db.findUserByEmail(email);
+    // Same generic error whether the email is unknown or the password is
+    // wrong — don't leak which emails have accounts.
+    if (!row || !(await bcrypt.compare(password || '', row.passwordHash))) {
+      return res.status(401).json({ error: 'Email ou mot de passe incorrect.' });
+    }
+    if (sessionId) db.migrateGuestData(sessionId, row.id);
+
+    const user = { id: row.id, email: row.email };
+    signAuthCookie(res, user);
+    res.json({ user });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Connexion impossible pour le moment.' });
+  }
+});
+
+app.post('/api/auth/logout', (req, res) => {
+  res.clearCookie(AUTH_COOKIE);
+  res.json({ ok: true });
+});
+
+app.get('/api/auth/me', (req, res) => {
+  res.json({ user: req.user || null });
+});
 
 // ---------------------------------------------------------------------
 // Claude API call + the same lenient JSON parsing used in the prototype
@@ -294,44 +405,44 @@ app.get('/api/gallery', async (req, res) => {
 });
 
 // ---------------------------------------------------------------------
-// Trips & search history — scoped by a session id the browser generates
-// and stores in localStorage. This is NOT a real account system: there is
-// no login, no password, no cross-device sync. Anyone with that random id
-// (e.g. if it leaked) could read that session's saved trips. Good enough
-// for a beta; swap for real auth (email/OAuth) before you have data you'd
-// call "user accounts".
+// Trips & search history — scoped by whichever identity the request has:
+// a real user (req.user, from the auth cookie) if logged in, otherwise the
+// anonymous session id the browser generates and stores in localStorage.
+// Guest mode keeps working exactly as before — an account is optional.
 // ---------------------------------------------------------------------
 
 app.get('/api/trips', (req, res) => {
-  const sessionId = req.query.sessionId;
-  if (!sessionId) return res.status(400).json({ error: 'sessionId requis' });
-  res.json(db.listTrips(sessionId));
+  const identity = identityFrom(req, req.query);
+  if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
+  res.json(db.listTrips(identity));
 });
 
 app.post('/api/trips', (req, res) => {
   const { sessionId, ...trip } = req.body || {};
-  if (!sessionId) return res.status(400).json({ error: 'sessionId requis' });
-  const id = db.insertTrip(sessionId, trip);
+  const identity = identityFrom(req, { sessionId });
+  if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
+  const id = db.insertTrip(identity, trip);
   res.json({ id });
 });
 
 app.delete('/api/trips/:id', (req, res) => {
-  const sessionId = req.query.sessionId;
-  if (!sessionId) return res.status(400).json({ error: 'sessionId requis' });
-  db.deleteTrip(sessionId, req.params.id);
+  const identity = identityFrom(req, req.query);
+  if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
+  db.deleteTrip(identity, req.params.id);
   res.json({ ok: true });
 });
 
 app.get('/api/history', (req, res) => {
-  const sessionId = req.query.sessionId;
-  if (!sessionId) return res.status(400).json({ error: 'sessionId requis' });
-  res.json(db.listHistory(sessionId));
+  const identity = identityFrom(req, req.query);
+  if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
+  res.json(db.listHistory(identity));
 });
 
 app.post('/api/history', (req, res) => {
   const { sessionId, ...entry } = req.body || {};
-  if (!sessionId) return res.status(400).json({ error: 'sessionId requis' });
-  db.insertHistory(sessionId, entry);
+  const identity = identityFrom(req, { sessionId });
+  if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
+  db.insertHistory(identity, entry);
   res.json({ ok: true });
 });
 
