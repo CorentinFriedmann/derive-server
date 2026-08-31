@@ -111,6 +111,20 @@ const authLimiter = rateLimit({
   message: { error: 'Trop de tentatives — réessayez dans quelques minutes.' }
 });
 
+// Shared by the three Claude-backed routes (/api/generate, /api/day-plan,
+// /api/refine) — these are the actual cost/abuse surface the brief
+// originally assumed was already covered. A real session can easily hit
+// 15-20 calls (regenerate, refine a couple of tiers, open a few day
+// plans), so this is sized generously above that rather than around a
+// single generation.
+const aiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 30,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de demandes — réessayez dans quelques minutes.' }
+});
+
 app.post('/api/auth/signup', authLimiter, async (req, res) => {
   try {
     const { email: rawEmail, password, sessionId } = req.body || {};
@@ -173,7 +187,7 @@ app.get('/api/config', (req, res) => {
 // /api/generate — the main "3 destinations x 3 tiers" itinerary call
 // ---------------------------------------------------------------------
 
-app.post('/api/generate', async (req, res) => {
+app.post('/api/generate', aiLimiter, async (req, res) => {
   try {
     const { promptText, budgetLabel, nights, travelers, excludeDestinations, tags, lang } = req.body || {};
     if (!promptText || !nights || !travelers) {
@@ -233,7 +247,7 @@ app.post('/api/generate', async (req, res) => {
 // /api/day-plan — day-by-day breakdown for one chosen tier
 // ---------------------------------------------------------------------
 
-app.post('/api/day-plan', async (req, res) => {
+app.post('/api/day-plan', aiLimiter, async (req, res) => {
   try {
     const { destinationFull, tier, nights, lang } = req.body || {};
     if (!destinationFull || !tier || !nights) {
@@ -303,7 +317,7 @@ app.post('/api/day-plan', async (req, res) => {
 // ("enlève la visite du musée, ajoute une activité plus tranquille…")
 // ---------------------------------------------------------------------
 
-app.post('/api/refine', async (req, res) => {
+app.post('/api/refine', aiLimiter, async (req, res) => {
   try {
     const { destination, country, tier, instruction, nights, travelers, lang } = req.body || {};
     if (!destination || !tier || !instruction) {
