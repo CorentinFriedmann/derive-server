@@ -351,26 +351,62 @@ app.post('/api/refine', aiLimiter, async (req, res) => {
 // so real, accurate destination photos are back on the table.
 // ---------------------------------------------------------------------
 
+// Looking up a Wikipedia page by EXACT title match fails as soon as the
+// AI-generated name is composite or slightly off from the real article
+// title ("Dolomites - Val Gardena" instead of "Val Gardena"). Fuzzy search
+// (the search API) fixes that by finding the closest article, the same way
+// a human would using Wikipedia's own search box.
+async function resolveWikipediaTitle(query, lang) {
+  const url = `https://${lang}.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(query)}&format=json&srlimit=1&origin=*`;
+  const r = await fetch(url);
+  if (!r.ok) throw new Error('search failed');
+  const d = await r.json();
+  const hit = d.query && d.query.search && d.query.search[0];
+  if (!hit) throw new Error('no search result');
+  return hit.title;
+}
+
+// Tries several variants of the name if the first yields nothing: the full
+// name, then each part split on a dash/comma (useful for composite names
+// like "Dolomites - Val Gardena" or "Kyoto, Japon").
+function nameVariants(name) {
+  const variants = [name];
+  const parts = name.split(/[-,–—]/).map(p => p.trim()).filter(p => p.length > 2);
+  parts.forEach(p => { if (!variants.includes(p)) variants.push(p); });
+  return variants;
+}
+
 app.get('/api/photo', async (req, res) => {
   const name = req.query.name;
   if (!name) return res.status(400).json({ error: 'name requis' });
-  const tryLang = async (lang) => {
-    const r = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(name)}`);
+
+  const tryVariant = async (variant, lang) => {
+    const title = await resolveWikipediaTitle(variant, lang);
+    const r = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`);
     if (!r.ok) throw new Error('no page');
     const d = await r.json();
     if (d.thumbnail && d.thumbnail.source) return d.thumbnail.source;
     throw new Error('no thumbnail');
   };
+
   let src = null;
-  try { src = await tryLang('fr'); } catch (_e) { try { src = await tryLang('en'); } catch (_e2) { /* none found */ } }
+  outer:
+  for (const variant of nameVariants(name)) {
+    for (const lang of ['fr', 'en']) {
+      try { src = await tryVariant(variant, lang); break outer; }
+      catch (_e) { /* essaie la variante/langue suivante */ }
+    }
+  }
   res.json({ src });
 });
 
 app.get('/api/gallery', async (req, res) => {
   const name = req.query.name;
   if (!name) return res.status(400).json({ error: 'name requis' });
-  const tryLang = async (lang) => {
-    const r = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(name)}`);
+
+  const tryVariant = async (variant, lang) => {
+    const title = await resolveWikipediaTitle(variant, lang);
+    const r = await fetch(`https://${lang}.wikipedia.org/api/rest_v1/page/media-list/${encodeURIComponent(title)}`);
     if (!r.ok) throw new Error('no media-list');
     const d = await r.json();
     const items = (d.items || []).filter(it =>
@@ -384,8 +420,15 @@ app.get('/api/gallery', async (req, res) => {
     if (!urls.length) throw new Error('empty gallery');
     return urls;
   };
+
   let urls = [];
-  try { urls = await tryLang('fr'); } catch (_e) { try { urls = await tryLang('en'); } catch (_e2) { /* none found */ } }
+  outer:
+  for (const variant of nameVariants(name)) {
+    for (const lang of ['fr', 'en']) {
+      try { urls = await tryVariant(variant, lang); break outer; }
+      catch (_e) { /* essaie la variante/langue suivante */ }
+    }
+  }
   res.json({ urls });
 });
 
