@@ -140,6 +140,7 @@
     <p><strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.</p>
     <p><strong>Compte :</strong> créer un compte (email + mot de passe) est optionnel — sans compte, vos séjours et votre historique restent liés à cet identifiant de navigateur, et vous les perdez si vous videz les données du navigateur ou changez d'appareil. Avec un compte, vos séjours déjà sauvegardés dans ce navigateur sont automatiquement rattachés à votre compte, et retrouvables en vous reconnectant depuis n'importe quel appareil. Les mots de passe sont hashés (jamais stockés en clair) ; il n'y a pas encore de récupération de mot de passe oublié ni de connexion via Google/autre.</p>
     <p><strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) demanderait de stocker l'itinéraire à une adresse dédiée — pas encore construit.</p>
+    <p><strong>Email :</strong> le bouton "Recevoir cet itinéraire par email" envoie un vrai email (récapitulatif de la formule) à l'adresse indiquée. Cette adresse est conservée pour pouvoir vous recontacter à ce sujet ; la case à cocher (décochée par défaut) est le seul cas où vous acceptez aussi de recevoir occasionnellement d'autres idées de voyage — il n'y a pas encore de newsletter automatique, ni de désinscription en un clic.</p>
     <p><strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
   </div>
 </div>
@@ -193,6 +194,17 @@
         <button class="book-btn ghost" id="detailShareBtn" type="button">Partager ce séjour</button>
         <button class="book-btn ghost" id="detailExportBtn" type="button">Télécharger en .txt</button>
         <div class="share-confirm" id="shareConfirm"></div>
+
+        <div class="refine-box">
+          <button class="refine-toggle" type="button" id="emailToggleBtn">✉ Recevoir cet itinéraire par email</button>
+          <div class="refine-panel" id="emailPanel" style="display:none;">
+            <input type="email" class="refine-input" id="emailInput" placeholder="vous@exemple.com" autocomplete="email">
+            <label class="email-consent"><input type="checkbox" id="emailConsent">Je veux aussi recevoir occasionnellement des idées de voyage par email</label>
+            <button class="book-btn ghost refine-submit" type="button" id="emailSubmitBtn">Envoyer</button>
+            <div class="refine-msg" id="emailMsg"></div>
+          </div>
+        </div>
+
         <div class="detail-map">
           <iframe id="detailMapFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
@@ -799,6 +811,11 @@
     document.getElementById('detailFlightsBtn').href = flightsUrl(currentDestinationFull);
     document.getElementById('detailMapFrame').src = mapEmbedUrl(currentDestinationFull);
     shareConfirm.textContent = '';
+    emailPanel.style.display = 'none';
+    emailToggleBtn.textContent = '✉ Recevoir cet itinéraire par email';
+    emailInput.value = '';
+    document.getElementById('emailConsent').checked = false;
+    emailMsg.textContent = ''; emailMsg.className = 'refine-msg';
 
     const img = document.getElementById('detailHeroImg');
     const gallery = document.getElementById('detailGallery');
@@ -910,6 +927,46 @@
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
+  });
+
+  const emailToggleBtn = document.getElementById('emailToggleBtn');
+  const emailPanel = document.getElementById('emailPanel');
+  const emailInput = document.getElementById('emailInput');
+  const emailSubmitBtn = document.getElementById('emailSubmitBtn');
+  const emailMsg = document.getElementById('emailMsg');
+
+  emailToggleBtn.addEventListener('click', function(){
+    const isOpen = emailPanel.style.display !== 'none';
+    emailPanel.style.display = isOpen ? 'none' : 'block';
+    emailToggleBtn.textContent = isOpen ? '✉ Recevoir cet itinéraire par email' : '✕ Fermer';
+    if(!isOpen) emailInput.focus();
+  });
+
+  emailSubmitBtn.addEventListener('click', async function(){
+    const email = emailInput.value.trim();
+    if(!email){ emailInput.focus(); return; }
+    if(!currentTier) return;
+
+    emailSubmitBtn.disabled = true;
+    emailSubmitBtn.textContent = 'Envoi…';
+    emailMsg.textContent = ''; emailMsg.className = 'refine-msg';
+
+    try{
+      await callBackend('/email-itinerary', {
+        email: email, destinationFull: currentDestinationFull, tier: currentTier,
+        nights: currentNights, travelers: currentTravelers,
+        marketingConsent: document.getElementById('emailConsent').checked
+      });
+      emailMsg.textContent = 'Itinéraire envoyé ✓ (vérifiez vos spams si besoin)';
+      emailMsg.className = 'refine-msg ok';
+      emailInput.value = '';
+    }catch(err){
+      emailMsg.textContent = err.message || "L'envoi a échoué — réessayez dans un instant.";
+      emailMsg.className = 'refine-msg error';
+    }finally{
+      emailSubmitBtn.disabled = false;
+      emailSubmitBtn.textContent = 'Envoyer';
+    }
   });
 
   // Coming from a /destinations/:slug SEO page ("Générer MON itinéraire

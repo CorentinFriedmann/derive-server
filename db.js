@@ -48,6 +48,15 @@ db.exec(`
     password_hash  TEXT NOT NULL,
     created_at     INTEGER NOT NULL
   );
+
+  CREATE TABLE IF NOT EXISTS email_captures (
+    id                  TEXT PRIMARY KEY,
+    email               TEXT NOT NULL,
+    destination         TEXT,
+    marketing_consent   INTEGER NOT NULL DEFAULT 0,
+    created_at          INTEGER NOT NULL
+  );
+  CREATE INDEX IF NOT EXISTS idx_email_captures_email ON email_captures(email);
 `);
 
 // --- Soft migration: add user_id to trips/history without touching
@@ -167,7 +176,20 @@ function insertHistory(identity, entry) {
   }
 }
 
+// --- Email captures -----------------------------------------------------
+// Just a landing spot for "someone wanted this itinerary" — no automatic
+// newsletter is built on top of this yet, see README.
+
+function insertEmailCapture(email, destination, marketingConsent) {
+  const id = newId();
+  db.prepare(
+    'INSERT INTO email_captures (id, email, destination, marketing_consent, created_at) VALUES (?, ?, ?, ?, ?)'
+  ).run(id, email, destination || '', marketingConsent ? 1 : 0, Date.now());
+  return id;
+}
+
 module.exports = {
   listTrips, insertTrip, deleteTrip, listHistory, insertHistory,
-  createUser, findUserByEmail, findUserById, migrateGuestData
+  createUser, findUserByEmail, findUserById, migrateGuestData,
+  insertEmailCapture
 };

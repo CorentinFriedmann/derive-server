@@ -13,6 +13,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const { askClaude, parseJsonLenient } = require('./lib/claude');
 const { renderDestinationPage } = require('./lib/destinationPage');
+const { sendEmail } = require('./lib/resend');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
@@ -360,6 +361,66 @@ app.post('/api/history', (req, res) => {
   if (!identity.userId && !identity.sessionId) return res.status(400).json({ error: 'sessionId requis' });
   db.insertHistory(identity, entry);
   res.json({ ok: true });
+});
+
+// ---------------------------------------------------------------------
+// /api/email-itinerary — send the itinerary the visitor is looking at to
+// their inbox, and keep a record so a human can follow up later. No
+// automatic newsletter is wired up — marketingConsent just gets stored,
+// unchecked by default (see the checkbox in the detail panel).
+// ---------------------------------------------------------------------
+
+const emailLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop d\'envois — réessayez dans quelques minutes.' }
+});
+
+function escapeHtmlForEmail(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
+}
+
+function buildItineraryEmailHtml({ destinationFull, tier, nights, travelers }) {
+  const restaurantNames = (tier.restaurants || []).map(r => (typeof r === 'string' ? r : r.name));
+  const list = items => items.map(i => '<li style="margin-bottom:4px;">' + escapeHtmlForEmail(i) + '</li>').join('');
+  return `
+    <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#0E2A3D;">
+      <p style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5C7C93;margin:0 0 6px;">Peacetrip · ${escapeHtmlForEmail(tier.label)}</p>
+      <h1 style="font-size:26px;margin:0 0 6px;">${escapeHtmlForEmail(destinationFull)}</h1>
+      <p style="font-family:Arial,sans-serif;font-size:14px;color:#5C7C93;margin:0 0 20px;">${nights} nuits · ${travelers} voyageur${travelers > 1 ? 's' : ''} · Hôtel : ${escapeHtmlForEmail(tier.hotel.name)} (~${tier.hotel.pricePerNight}€/nuit)</p>
+      <p style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;margin:0 0 24px;">${tier.estimatedTotal}€ <span style="font-size:13px;font-weight:normal;color:#5C7C93;">total estimé</span></p>
+      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">Activités</p>
+      <ul style="font-family:Arial,sans-serif;font-size:14px;padding-left:18px;margin:0 0 20px;">${list(tier.activities || [])}</ul>
+      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">Tables suggérées</p>
+      <ul style="font-family:Arial,sans-serif;font-size:14px;padding-left:18px;margin:0 0 24px;">${list(restaurantNames)}</ul>
+      <p style="font-family:Arial,sans-serif;font-size:12px;color:#8FA8BA;">Itinéraire indicatif — à confirmer sur chaque plateforme de réservation. Envoyé depuis Peacetrip.</p>
+    </div>
+  `;
+}
+
+app.post('/api/email-itinerary', emailLimiter, async (req, res) => {
+  try {
+    const { email: rawEmail, destinationFull, tier, nights, travelers, marketingConsent } = req.body || {};
+    const email = String(rawEmail || '').trim().toLowerCase();
+    if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Adresse email invalide.' });
+    if (!destinationFull || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
+
+    await sendEmail({
+      to: email,
+      subject: `Votre itinéraire ${destinationFull} — ${tier.label}`,
+      html: buildItineraryEmailHtml({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1 })
+    });
+
+    db.insertEmailCapture(email, destinationFull, !!marketingConsent);
+    res.json({ ok: true });
+  } catch (err) {
+    console.error(err);
+    res.status(502).json({ error: 'Envoi de l\'email indisponible pour le moment.', detail: String(err.message || err) });
+  }
 });
 
 // ---------------------------------------------------------------------

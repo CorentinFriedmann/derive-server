@@ -309,6 +309,9 @@ footer .foot-note{font-size:0.82rem;color:var(--text-soft);max-width:44ch;}
 .detail-map{border-radius:10px;overflow:hidden;margin-top:14px;border:1px solid var(--border);}
 .detail-map iframe{width:100%;height:180px;border:0;display:block;}
 .share-confirm{font-size:0.76rem;color:var(--green-deep);margin-top:8px;min-height:1em;}
+#emailInput{min-height:auto;resize:none;}
+.email-consent{display:flex;align-items:flex-start;gap:7px;font-size:0.76rem;color:var(--text-soft);margin:0 0 10px;cursor:pointer;line-height:1.3;}
+.email-consent input{margin-top:2px;flex-shrink:0;}
 
 /* DESTINATION PAGES (server-rendered, SEO) */
 .dest-hero{padding:50px 0 10px;}
