@@ -511,52 +511,139 @@ function escapeHtmlForEmail(s) {
 }
 
 const EMAIL_STRINGS = {
-  fr: { totalNote: 'total estimé', activities: 'Activités', restaurants: 'Tables suggérées',
-        nightsWord: 'nuits', travelerWord: 'voyageur', hotelLabel: 'Hôtel',
-        footer: 'Itinéraire indicatif — à confirmer sur chaque plateforme de réservation. Envoyé depuis Peacetrip.',
-        subject: (dest, label) => `Votre itinéraire ${dest} — ${label}` },
-  en: { totalNote: 'total estimate', activities: 'Activities', restaurants: 'Suggested restaurants',
-        nightsWord: 'nights', travelerWord: 'traveler', hotelLabel: 'Hotel',
-        footer: 'Indicative itinerary — confirm on each booking platform. Sent from Peacetrip.',
-        subject: (dest, label) => `Your ${dest} itinerary — ${label}` }
+  fr: {
+    kicker: 'Votre itinéraire', formula: 'Formule', nights: 'nuits', traveler: 'voyageur', perNight: 'nuit',
+    priceNote: 'Total estimé, vols et hôtel inclus',
+    hotelSuggested: 'Hôtel suggéré', activities: 'Activités', restaurants: 'Tables suggérées',
+    ctaDetail: 'Voir le détail et réserver',
+    footerTagline: 'Décrivez votre envie, on trace le voyage.',
+    footerLegal: 'Prix estimé à titre indicatif, à confirmer sur chaque plateforme de réservation. Peacetrip, entreprise individuelle — Corentin Friedmann.',
+    receivedNote: 'Vous recevez cet email suite à votre demande sur peacetrip.com.',
+    subject: (dest, label) => `Votre itinéraire ${dest} — ${label}`
+  },
+  en: {
+    kicker: 'Your itinerary', formula: '', nights: 'nights', traveler: 'traveler', perNight: 'night',
+    priceNote: 'Estimated total, flights and hotel included',
+    hotelSuggested: 'Suggested hotel', activities: 'Activities', restaurants: 'Suggested restaurants',
+    ctaDetail: 'View details and book',
+    footerTagline: 'Describe what you want, we trace the trip.',
+    footerLegal: 'Estimated price, to be confirmed on each booking platform. Peacetrip, sole proprietorship — Corentin Friedmann.',
+    receivedNote: 'You are receiving this email because you requested it on peacetrip.com.',
+    subject: (dest, label) => `Your ${dest} itinerary — ${label}`
+  }
 };
 
-function buildItineraryEmailHtml({ destinationFull, tier, nights, travelers, lang }) {
+// Styled with fully inline styles (not a <style> + class block like the
+// apercu-email.html mockup used) — Outlook desktop's rendering engine
+// commonly ignores <head><style> blocks entirely, which would leave the
+// email unstyled for a lot of recipients. Same colors/spacing/typography
+// as the mockup, just inlined for real-world email client compatibility.
+function buildItineraryEmailHtml({ destinationFull, tier, nights, travelers, lang, baseUrl }) {
   const s = EMAIL_STRINGS[lang === 'en' ? 'en' : 'fr'];
-  const restaurantNames = (tier.restaurants || []).map(r => (typeof r === 'string' ? r : r.name));
-  const list = items => items.map(i => '<li style="margin-bottom:4px;">' + escapeHtmlForEmail(i) + '</li>').join('');
   // Always € — the AI is told to price in euros unconditionally, in French
   // or English, so "$" here would relabel the same number as a different
   // currency rather than convert it. See the matching note in itineraryPdf.js.
   const priceUnit = `${tier.hotel.pricePerNight}€`;
   const totalUnit = `${tier.estimatedTotal}€`;
+  const metaLine = lang === 'en'
+    ? `${tier.label} plan · ${nights} ${s.nights} · ${travelers} ${s.traveler}${travelers > 1 ? 's' : ''}`
+    : `${s.formula} ${tier.label} · ${nights} ${s.nights} · ${travelers} ${s.traveler}${travelers > 1 ? 's' : ''}`;
+
+  const itemRow = (main, sub, isLast) =>
+    `<div style="padding:10px 0;border-bottom:${isLast ? 'none' : '1px solid #EEEEEE'};font-size:14px;color:#222222;">` +
+    escapeHtmlForEmail(main) +
+    (sub ? `<span style="color:#4C7A63;font-size:12px;display:block;margin-top:2px;">${escapeHtmlForEmail(sub)}</span>` : '') +
+    `</div>`;
+
+  const activityRows = (tier.activities || []).map((a, i, arr) => itemRow(a, null, i === arr.length - 1)).join('');
+  const restaurantRows = (tier.restaurants || []).map((r, i, arr) => {
+    const name = typeof r === 'string' ? r : r.name;
+    const address = typeof r === 'object' ? r.address : '';
+    return itemRow(name, address, i === arr.length - 1);
+  }).join('');
+
+  const sectionTitle = (title, first) =>
+    `<h2 style="color:#0A2E3D;font-size:16px;text-transform:uppercase;letter-spacing:0.5px;margin:${first ? '0' : '26px'} 0 14px;border-bottom:2px solid #2E9E6B;padding-bottom:8px;">${escapeHtmlForEmail(title)}</h2>`;
+
   return `
-    <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#0E2A3D;">
-      <p style="font-family:Arial,sans-serif;font-size:12px;letter-spacing:0.08em;text-transform:uppercase;color:#5C7C93;margin:0 0 6px;">Peacetrip · ${escapeHtmlForEmail(tier.label)}</p>
-      <h1 style="font-size:26px;margin:0 0 6px;">${escapeHtmlForEmail(destinationFull)}</h1>
-      <p style="font-family:Arial,sans-serif;font-size:14px;color:#5C7C93;margin:0 0 20px;">${nights} ${s.nightsWord} · ${travelers} ${s.travelerWord}${travelers > 1 ? 's' : ''} · ${s.hotelLabel}: ${escapeHtmlForEmail(tier.hotel.name)} (~${priceUnit}/${lang === 'en' ? 'night' : 'nuit'})</p>
-      <p style="font-family:Arial,sans-serif;font-size:22px;font-weight:bold;margin:0 0 24px;">${totalUnit} <span style="font-size:13px;font-weight:normal;color:#5C7C93;">${s.totalNote}</span></p>
-      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">${s.activities}</p>
-      <ul style="font-family:Arial,sans-serif;font-size:14px;padding-left:18px;margin:0 0 20px;">${list(tier.activities || [])}</ul>
-      <p style="font-family:Arial,sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:0.06em;color:#5C7C93;margin:0 0 8px;">${s.restaurants}</p>
-      <ul style="font-family:Arial,sans-serif;font-size:14px;padding-left:18px;margin:0 0 24px;">${list(restaurantNames)}</ul>
-      <p style="font-family:Arial,sans-serif;font-size:12px;color:#8FA8BA;">${s.footer}</p>
+    <div style="max-width:600px;margin:0 auto;background:#FFFFFF;font-family:Arial,Helvetica,sans-serif;">
+      <div style="background:#0A2E3D;padding:28px 32px;text-align:center;">
+        <img src="${baseUrl}/assets/logo.png" alt="Peacetrip" style="height:36px;">
+      </div>
+
+      <div style="background:#0F4257;padding:36px 32px 30px;text-align:center;">
+        <p style="font-size:12px;letter-spacing:1px;text-transform:uppercase;color:#2E9E6B;font-weight:bold;margin:0 0 10px;">${escapeHtmlForEmail(s.kicker)}</p>
+        <h1 style="color:#EAF8F1;font-size:26px;margin:0 0 6px;font-family:Georgia,'Times New Roman',serif;">${escapeHtmlForEmail(destinationFull)}</h1>
+        <p style="color:#8FC4D6;font-size:14px;margin:0;">${escapeHtmlForEmail(metaLine)}</p>
+      </div>
+
+      <div style="background:#2E9E6B;padding:18px 32px;text-align:center;">
+        <p style="color:#FFFFFF;font-size:28px;font-weight:bold;margin:0;">${totalUnit}</p>
+        <p style="color:#EAF8F1;font-size:12px;margin:4px 0 0;">${escapeHtmlForEmail(s.priceNote)}</p>
+      </div>
+
+      <div style="padding:32px;">
+        ${sectionTitle(s.hotelSuggested, true)}
+        ${itemRow(tier.hotel.name, `~${priceUnit}/${s.perNight}`, true)}
+
+        ${sectionTitle(s.activities)}
+        ${activityRows}
+
+        ${sectionTitle(s.restaurants)}
+        ${restaurantRows}
+
+        <div style="text-align:center;margin:30px 0 10px;">
+          <a href="${baseUrl}/" style="display:inline-block;background:#0A2E3D;color:#FFFFFF;text-decoration:none;padding:14px 32px;border-radius:8px;font-weight:bold;font-size:15px;">${escapeHtmlForEmail(s.ctaDetail)}</a>
+        </div>
+      </div>
+
+      <div style="background:#F3FAF7;padding:24px 32px;text-align:center;font-size:12px;color:#4C7A63;">
+        <p style="margin:0;"><strong>Peacetrip</strong> — ${escapeHtmlForEmail(s.footerTagline)}<br>
+        <a href="${baseUrl}/" style="color:#0F4257;">peacetrip.com</a> · <a href="mailto:contact@peacetrip.com" style="color:#0F4257;">contact@peacetrip.com</a></p>
+        <p style="color:#8AA69A;font-size:11px;margin-top:10px;">${escapeHtmlForEmail(s.footerLegal)}<br>${escapeHtmlForEmail(s.receivedNote)}</p>
+      </div>
     </div>
   `;
 }
 
+// Runs buildItineraryPdf (which streams) into a Buffer so it can ride
+// along as a real email attachment instead of a "regenerate PDF" link —
+// no shareable/persistent itinerary URL exists yet to link back to (see
+// the honesty box on the homepage), so an attachment is the only way the
+// "download PDF" promise is actually true today.
+function buildItineraryPdfBuffer(opts) {
+  return new Promise((resolve, reject) => {
+    const { PassThrough } = require('stream');
+    const stream = new PassThrough();
+    const chunks = [];
+    stream.on('data', chunk => chunks.push(chunk));
+    stream.on('end', () => resolve(Buffer.concat(chunks)));
+    stream.on('error', reject);
+    buildItineraryPdf(opts, stream);
+  });
+}
+
 app.post('/api/email-itinerary', emailLimiter, async (req, res) => {
   try {
-    const { email: rawEmail, destinationFull, tier, nights, travelers, marketingConsent, lang } = req.body || {};
+    const { email: rawEmail, destination, country, tier, nights, travelers, marketingConsent, lang } = req.body || {};
     const email = String(rawEmail || '').trim().toLowerCase();
     if (!EMAIL_RE.test(email)) return res.status(400).json({ error: 'Adresse email invalide.' });
-    if (!destinationFull || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
+    if (!destination || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
 
+    const destinationFull = country ? `${destination}, ${country}` : destination;
     const s = EMAIL_STRINGS[lang === 'en' ? 'en' : 'fr'];
+    const baseUrl = req.protocol + '://' + req.get('host');
+    const nightsN = nights || 0;
+    const travelersN = travelers || 1;
+
+    const pdfFilename = destination.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.pdf';
+    const pdfBuffer = await buildItineraryPdfBuffer({ destination, country, tier, nights: nightsN, travelers: travelersN, days: [], lang });
+
     await sendEmail({
       to: email,
       subject: s.subject(destinationFull, tier.label),
-      html: buildItineraryEmailHtml({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1, lang })
+      html: buildItineraryEmailHtml({ destinationFull, tier, nights: nightsN, travelers: travelersN, lang, baseUrl }),
+      attachments: [{ filename: pdfFilename, content: pdfBuffer.toString('base64') }]
     });
 
     db.insertEmailCapture(email, destinationFull, !!marketingConsent);
@@ -573,16 +660,16 @@ app.post('/api/email-itinerary', emailLimiter, async (req, res) => {
 
 app.post('/api/export-pdf', generalLimiter, (req, res) => {
   try {
-    const { destinationFull, tier, nights, travelers, lang } = req.body || {};
-    if (!destinationFull || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
+    const { destination, country, tier, nights, travelers, days, lang } = req.body || {};
+    if (!destination || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
 
     // ̀-ͯ is the combining-diacritics block NFD splits accents
     // into (e.g. "é" -> "e" + U+0301) — stripping it keeps "ile-de-re"
     // instead of losing accented letters outright.
-    const filename = (destinationFull || 'sejour').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.pdf';
+    const filename = (destination || 'sejour').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') + '.pdf';
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', 'attachment; filename="' + filename + '"');
-    buildItineraryPdf({ destinationFull, tier, nights: nights || 0, travelers: travelers || 1, lang }, res);
+    buildItineraryPdf({ destination, country, tier, nights: nights || 0, travelers: travelers || 1, days: days || [], lang }, res);
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Export PDF indisponible pour le moment.' });

@@ -102,6 +102,8 @@ window.I18N = {
     honestyBuildMore: "<strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.",
 
     footNote: 'Peacetrip vise une commission d\'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.',
+    footContactBiz: 'Corentin Friedmann, entreprise individuelle',
+    footContactAddr: 'Mulhouse, France · SIRET : [à compléter après immatriculation]',
 
     authTabLogin: 'Connexion', authTabSignup: 'Créer un compte',
     authEmailLabel: 'Email', authPasswordLabel: 'Mot de passe',
@@ -233,6 +235,8 @@ window.I18N = {
     honestyBuildMore: "<strong>Still to build:</strong> one-click booking and automatic commission tracking, which need official affiliate agreements with Booking.com, GetYourGuide, Expedia or TheFork.",
 
     footNote: "Peacetrip aims for an affiliate commission on every confirmed booking through our partner links — never added on top of your price.",
+    footContactBiz: 'Corentin Friedmann, sole proprietorship',
+    footContactAddr: 'Mulhouse, France · SIRET: [to be completed after registration]',
 
     authTabLogin: 'Log in', authTabSignup: 'Create account',
     authEmailLabel: 'Email', authPasswordLabel: 'Password',

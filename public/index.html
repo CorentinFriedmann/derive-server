@@ -149,7 +149,14 @@
 
 <footer class="wrap">
   <div class="foot-brand">Peacetrip</div>
-  <div class="foot-note" data-i18n="footNote">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
+  <div class="foot-right">
+    <div class="foot-note" data-i18n="footNote">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
+    <div class="foot-contact">
+      <strong>Peacetrip</strong> — <span data-i18n="footContactBiz">Corentin Friedmann, entreprise individuelle</span><br>
+      <span data-i18n="footContactAddr">Mulhouse, France · SIRET : [à compléter après immatriculation]</span><br>
+      <a href="mailto:contact@peacetrip.com">contact@peacetrip.com</a>
+    </div>
+  </div>
 </footer>
 
 <!-- AUTH MODAL -->
@@ -1013,7 +1020,8 @@
   const dayPanels = document.getElementById('dayPanels');
   const shareConfirm = document.getElementById('shareConfirm');
   const detailPanel = document.querySelector('.detail-panel');
-  let currentTier = null, currentDestinationFull = '';
+  let currentTier = null, currentDestinationFull = '', currentDestination = '', currentCountry = '';
+  let currentDayPlan = null;
   let detailOpener = null;
   let releaseDetailTrap = null;
 
@@ -1037,7 +1045,10 @@
     if(!tier) return;
     detailOpener = document.activeElement;
     currentTier = tier;
+    currentDestination = dest.destination;
+    currentCountry = dest.country || '';
     currentDestinationFull = dest.destination + (dest.country ? ", " + dest.country : "");
+    currentDayPlan = null;
 
     document.getElementById('detailTierLabel').textContent = tier.label;
     document.getElementById('detailTitle').textContent = dest.destination;
@@ -1081,6 +1092,7 @@
     try{
       const plan = await callDayPlan(currentDestinationFull, tier, currentNights);
       const days = plan.days;
+      currentDayPlan = days;
       let tabsHtml = days.map(function(d,i){ return '<button class="day-tab' + (i===0?' active':'') + '" data-day="' + i + '">' + t('dayLabel') + ' ' + d.day + '</button>'; }).join('');
       let panelsHtml = days.map(function(d,i){
         return '<div class="day-panel' + (i===0?' active':'') + '" data-day="' + i + '">' +
@@ -1180,8 +1192,9 @@
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          destinationFull: currentDestinationFull, tier: currentTier,
-          nights: currentNights, travelers: currentTravelers, lang: window.getLang()
+          destination: currentDestination, country: currentCountry, tier: currentTier,
+          nights: currentNights, travelers: currentTravelers, days: currentDayPlan,
+          lang: window.getLang()
         })
       });
       if(!res.ok) throw new Error('PDF export failed');
@@ -1228,7 +1241,7 @@
 
     try{
       await callBackend('/email-itinerary', {
-        email: email, destinationFull: currentDestinationFull, tier: currentTier,
+        email: email, destination: currentDestination, country: currentCountry, tier: currentTier,
         nights: currentNights, travelers: currentTravelers,
         marketingConsent: document.getElementById('emailConsent').checked,
         lang: window.getLang()

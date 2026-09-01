@@ -243,7 +243,10 @@ button.go:disabled{opacity:0.6;cursor:wait;transform:none;}
 
 footer{border-top:1px solid var(--border);padding:34px 0 44px;display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;}
 footer .foot-brand{font-family:var(--serif);font-size:1.1rem;}
-footer .foot-note{font-size:0.82rem;color:var(--text-soft);max-width:44ch;}
+footer .foot-right{max-width:44ch;}
+footer .foot-note{font-size:0.82rem;color:var(--text-soft);}
+.foot-contact{font-size:0.78rem;color:var(--text-soft);line-height:1.6;margin-top:10px;}
+.foot-contact a{color:var(--blue-deep);text-decoration:underline;}
 
 /* AUTH MODAL */
 .auth-overlay{
