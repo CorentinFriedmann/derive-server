@@ -168,10 +168,13 @@ button.go:disabled{opacity:0.6;cursor:wait;transform:none;}
 .block{margin-bottom:14px;}
 .block-label{font-size:0.72rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-soft);margin-bottom:6px;font-weight:600;}
 .block ul{margin:0;padding-left:0;list-style:none;font-size:0.88rem;}
-.block li{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dotted rgba(14,42,61,0.08);}
+.block li{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:6px 8px;padding:5px 0;border-bottom:1px dotted rgba(14,42,61,0.08);}
 .block li:last-child{border-bottom:none;}
 .mini-link{font-family:var(--mono);font-size:0.68rem;color:var(--blue-deep);text-decoration:none;white-space:nowrap;flex-shrink:0;}
 .mini-link:hover{text-decoration:underline;}
+.restaurant-actions{display:flex;align-items:center;gap:10px;flex-shrink:0;}
+.thefork-btn{font-family:var(--mono);font-size:0.64rem;background:var(--ink);color:var(--on-accent);padding:4px 9px;border-radius:100px;text-decoration:none;white-space:nowrap;transition:background .2s;}
+.thefork-btn:hover{background:var(--blue-deep);}
 
 .card-cta{margin-top:auto;padding-top:16px;display:flex;flex-direction:column;gap:8px;}
 .book-btn{width:100%;background:var(--ink);color:var(--on-accent);border:none;padding:12px;border-radius:8px;font-family:var(--sans);font-weight:600;font-size:0.88rem;cursor:pointer;transition:background .2s;text-decoration:none;text-align:center;display:block;}

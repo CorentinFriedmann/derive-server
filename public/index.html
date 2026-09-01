@@ -559,6 +559,23 @@
   function bookingUrl(destination){ return "https://www.booking.com/searchresults.html?ss=" + encodeURIComponent(destination); }
   function activityUrl(query, destination){ return "https://www.getyourguide.com/s/?q=" + encodeURIComponent(query + " " + destination); }
   function restaurantUrl(name, destination){ return "https://www.google.com/maps/search/" + encodeURIComponent(name + " " + destination); }
+
+  // Kwanko affiliate tracking for TheFork FR — set once the program is
+  // approved on kwanko.com (Dashboard > Liens > "TheFork FR") to the exact
+  // prefix Kwanko gives you, e.g. 'https://tracking.kwanko.com/12345?url='.
+  // Until then this is null, so theForkUrl() links straight to TheFork's
+  // search instead of through a fake tracking id that would just 404 —
+  // the button works for visitors today, it just doesn't earn commission
+  // until this is set.
+  const KWANKO_THEFORK_TRACKING_PREFIX = null;
+  function theForkUrl(restaurant, destination){
+    const name = typeof restaurant === 'string' ? restaurant : restaurant.name;
+    const address = typeof restaurant === 'object' && restaurant.address ? restaurant.address : '';
+    const query = address ? (name + ", " + address) : (name + " " + destination);
+    const targetUrl = "https://www.thefork.fr/search?query=" + encodeURIComponent(query);
+    return KWANKO_THEFORK_TRACKING_PREFIX ? (KWANKO_THEFORK_TRACKING_PREFIX + encodeURIComponent(targetUrl)) : targetUrl;
+  }
+
   function flightsUrl(destination){ return "https://www.google.com/travel/flights?q=" + encodeURIComponent("Vols vers " + destination); }
   function mapEmbedUrl(destination){ return "https://www.google.com/maps?q=" + encodeURIComponent(destination) + "&output=embed"; }
 
@@ -625,7 +642,12 @@
         tier.activities.map(function(a){ return '<li><span>' + a + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + activityUrl(a, destination) + '">' + t('seeLink') + '</a></li>'; }).join('') +
       '</ul></div>' +
       '<div class="block"><div class="block-label">' + t('restaurantsBlockLabel') + '</div><ul>' +
-        tier.restaurants.map(function(r){ return '<li><span>' + r + '</span><a class="mini-link" target="_blank" rel="noopener" href="' + restaurantUrl(r, destination) + '">' + t('seeLink') + '</a></li>'; }).join('') +
+        tier.restaurants.map(function(r){
+          return '<li><span>' + r + '</span><span class="restaurant-actions">' +
+            '<a class="mini-link" target="_blank" rel="noopener" href="' + restaurantUrl(r, destination) + '">' + t('seeLink') + '</a>' +
+            '<a class="thefork-btn" target="_blank" rel="noopener" href="' + theForkUrl(r, destination) + '">' + t('theForkBtn') + '</a>' +
+          '</span></li>';
+        }).join('') +
       '</ul></div>';
   }
 
