@@ -216,8 +216,29 @@ function setCachedGeneration(cacheKey, payload, ttlMs) {
   ).run(cacheKey, JSON.stringify(payload), now, now + ttlMs);
 }
 
+// --- Admin dashboard ----------------------------------------------------
+// One aggregate query bundle for /admin — read-only, no pagination since
+// this is an internal glance-at-it tool, not a paginated report.
+
+function getAdminStats() {
+  const totalGenerations = db.prepare('SELECT COUNT(*) AS n FROM history').get().n;
+  const totalSignups = db.prepare('SELECT COUNT(*) AS n FROM users').get().n;
+  const totalTrips = db.prepare('SELECT COUNT(*) AS n FROM trips').get().n;
+  const topDestinations = db.prepare(
+    `SELECT destination, COUNT(*) AS n FROM history
+     WHERE destination IS NOT NULL AND destination != ''
+     GROUP BY destination ORDER BY n DESC LIMIT 10`
+  ).all();
+  const recentHistory = db.prepare(
+    `SELECT prompt_text AS promptText, destination, created_at AS createdAt
+     FROM history ORDER BY created_at DESC LIMIT 20`
+  ).all();
+  return { totalGenerations, totalSignups, totalTrips, topDestinations, recentHistory };
+}
+
 module.exports = {
   listTrips, insertTrip, deleteTrip, listHistory, insertHistory,
   createUser, findUserByEmail, migrateGuestData,
-  insertEmailCapture, getCachedGeneration, setCachedGeneration
+  insertEmailCapture, getCachedGeneration, setCachedGeneration,
+  getAdminStats
 };

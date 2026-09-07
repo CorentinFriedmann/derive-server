@@ -139,24 +139,21 @@
 <div class="wrap honesty" id="honesty">
   <div class="honesty-box">
     <h4 data-i18n="honestyHeading">Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
-    <p data-i18n-html="honestyReal"><strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.</p>
-    <p data-i18n-html="honestyAccount"><strong>Compte :</strong> créer un compte (email + mot de passe) est optionnel — sans compte, vos séjours et votre historique restent liés à cet identifiant de navigateur, et vous les perdez si vous videz les données du navigateur ou changez d'appareil. Avec un compte, vos séjours déjà sauvegardés dans ce navigateur sont automatiquement rattachés à votre compte, et retrouvables en vous reconnectant depuis n'importe quel appareil. Les mots de passe sont hashés (jamais stockés en clair) ; il n'y a pas encore de récupération de mot de passe oublié ni de connexion via Google/autre.</p>
-    <p data-i18n-html="honestyShare"><strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) demanderait de stocker l'itinéraire à une adresse dédiée — pas encore construit.</p>
-    <p data-i18n-html="honestyEmail"><strong>Email :</strong> le bouton "Recevoir cet itinéraire par email" envoie un vrai email (récapitulatif de la formule) à l'adresse indiquée. Cette adresse est conservée pour pouvoir vous recontacter à ce sujet ; la case à cocher (décochée par défaut) est le seul cas où vous acceptez aussi de recevoir occasionnellement d'autres idées de voyage — il n'y a pas encore de newsletter automatique, ni de désinscription en un clic.</p>
-    <p data-i18n-html="honestyBuildMore"><strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
+    <p data-i18n-html="honestyReal"><strong>Réel :</strong> la génération, le remodelage d'une formule et le plan jour par jour passent par notre serveur, qui appelle Claude avec une clé API jamais exposée au navigateur. Les photos viennent de Wikipedia — une vraie base géolocalisée, pas un mot-clé approximatif — et la carte est une vraie carte Google Maps. Séjours et historique sont stockés en base de données, liés à un identifiant généré dans votre navigateur.</p>
+    <p data-i18n-html="honestyAccount"><strong>Compte :</strong> optionnel. Sans compte, vos séjours restent liés à ce navigateur et se perdent si vous videz vos données ou changez d'appareil. Avec un compte, ils sont rattachés automatiquement et retrouvables depuis n'importe quel appareil. Mots de passe hashés ; pas encore de mot de passe oublié ni de connexion Google.</p>
+    <p data-i18n-html="honestyShare"><strong>Partage :</strong> "Partager" copie un résumé texte ou ouvre le partage natif de l'appareil ; l'export télécharge un .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) n'est pas encore construit.</p>
+    <p data-i18n-html="honestyEmail"><strong>Email :</strong> le bouton envoie un vrai email avec le récapitulatif de la formule, PDF en pièce jointe. L'adresse est conservée pour vous recontacter ; la case à cocher (décochée par défaut) autorise en plus d'autres idées de voyage occasionnelles — pas encore de newsletter automatique ni de désinscription en un clic.</p>
+    <p data-i18n-html="honestyBuildMore"><strong>À construire :</strong> réservation en un clic et suivi automatique des commissions — nécessitent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
   </div>
 </div>
 
-<footer class="wrap">
-  <div class="foot-brand">Peacetrip</div>
-  <div class="foot-right">
-    <div class="foot-note" data-i18n="footNote">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
-    <div class="foot-contact">
-      <strong>Peacetrip</strong> — <span data-i18n="footContactBiz">Corentin Friedmann, entreprise individuelle</span><br>
-      <span data-i18n="footContactAddr">Mulhouse, France · SIRET : [à compléter après immatriculation]</span><br>
-      <a href="mailto:contact@peacetrip.com">contact@peacetrip.com</a>
-    </div>
+<footer class="wrap footer-clean">
+  <div class="footer-top">
+    <span class="foot-brand">Peacetrip</span>
+    <span class="foot-links"><a href="mailto:contact@peacetrip.com">contact@peacetrip.com</a></span>
   </div>
+  <div class="foot-note" data-i18n="footNote">Peacetrip vise une commission d'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.</div>
+  <div class="footer-bottom" data-i18n="footCopyright">© 2026 Peacetrip — Corentin Friedmann, entreprise individuelle · Mulhouse, France · SIRET : [à compléter après immatriculation]</div>
 </footer>
 
 <!-- AUTH MODAL -->
@@ -498,9 +495,9 @@
   const goHint = document.getElementById('goHint');
   function updateHint(){ goHint.textContent = t('goHint', { n: travelers, person: travelers>1 ? t('personPlural') : t('personSingular'), nights: nights }); }
   document.getElementById('travMinus').addEventListener('click', function(){ travelers=Math.max(1,travelers-1); travVal.textContent=travelers; updateHint(); });
-  document.getElementById('travPlus').addEventListener('click', function(){ travelers=Math.min(8,travelers+1); travVal.textContent=travelers; updateHint(); });
+  document.getElementById('travPlus').addEventListener('click', function(){ travelers=Math.min(20,travelers+1); travVal.textContent=travelers; updateHint(); });
   document.getElementById('nightMinus').addEventListener('click', function(){ nights=Math.max(2,nights-1); nightVal.textContent=nights; updateHint(); });
-  document.getElementById('nightPlus').addEventListener('click', function(){ nights=Math.min(21,nights+1); nightVal.textContent=nights; updateHint(); });
+  document.getElementById('nightPlus').addEventListener('click', function(){ nights=Math.min(60,nights+1); nightVal.textContent=nights; updateHint(); });
 
   const fallback = {
     destinations: [
@@ -663,7 +660,7 @@
     const destination = dest.destination + (dest.country ? ", " + dest.country : "");
     const travelerWord = travelersN > 1 ? t('travelerWordPlural') : t('travelerWord');
     return '' +
-      '<div class="card" data-dest="' + destIdx + '" data-tier="' + tier.key + '">' +
+      '<div class="card" data-dest="' + destIdx + '" data-tier="' + tier.key + '" style="animation-delay:' + (destIdx * 0.08) + 's">' +
         '<div class="card-photo"><img alt="' + dest.destination + '" loading="lazy"></div>' +
         '<div class="tier-label">' +
           '<div class="tier-toggle">' + dest.tiers.map(function(t){ return '<button class="tt-btn' + (t.key===tier.key?' active':'') + '" data-tt="' + t.key + '">' + t.label + '</button>'; }).join('') + '</div>' +

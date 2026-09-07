@@ -16,15 +16,22 @@ const { askClaude, parseJsonLenient } = require('./lib/claude');
 const { renderDestinationPage } = require('./lib/destinationPage');
 const { sendEmail } = require('./lib/resend');
 const { buildItineraryPdf } = require('./lib/itineraryPdf');
+const { renderAdminLogin, renderAdminDashboard } = require('./lib/adminPage');
 
 const app = express();
 app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: false })); // plain <form> posts — /admin/login has no client JS
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
 if (!SESSION_SECRET) {
   console.warn('⚠️  SESSION_SECRET manquante dans .env — les comptes utilisateurs échoueront tant qu\'elle n\'est pas définie.');
+}
+
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+if (!ADMIN_PASSWORD) {
+  console.warn('⚠️  ADMIN_PASSWORD manquante dans .env — /admin restera inaccessible tant qu\'elle n\'est pas définie.');
 }
 
 // ---------------------------------------------------------------------
@@ -674,6 +681,62 @@ app.post('/api/export-pdf', generalLimiter, (req, res) => {
     console.error(err);
     res.status(500).json({ error: 'Export PDF indisponible pour le moment.' });
   }
+});
+
+// ---------------------------------------------------------------------
+// /admin — internal activity dashboard. Single shared password (not tied
+// to user accounts — no roles system needed for a one-person V1), stored
+// in ADMIN_PASSWORD and checked with a constant-time compare. Session is
+// a short-lived signed cookie, same signing key/pattern as the user auth
+// cookie above.
+// ---------------------------------------------------------------------
+
+const ADMIN_COOKIE = 'peacetrip_admin';
+
+const adminLoginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Trop de tentatives — réessayez dans quelques minutes.' }
+});
+
+function safeCompare(a, b) {
+  const bufA = Buffer.from(String(a));
+  const bufB = Buffer.from(String(b));
+  if (bufA.length !== bufB.length) return false;
+  return crypto.timingSafeEqual(bufA, bufB);
+}
+
+function isAdminAuthed(req) {
+  const token = req.cookies && req.cookies[ADMIN_COOKIE];
+  if (!token || !SESSION_SECRET) return false;
+  try { return !!jwt.verify(token, SESSION_SECRET).admin; } catch (_e) { return false; }
+}
+
+app.get('/admin', (req, res) => {
+  if (!isAdminAuthed(req)) return res.type('html').send(renderAdminLogin({}));
+  res.type('html').send(renderAdminDashboard(db.getAdminStats()));
+});
+
+app.post('/admin/login', adminLoginLimiter, (req, res) => {
+  const password = (req.body && req.body.password) || '';
+  if (!ADMIN_PASSWORD || !SESSION_SECRET || !safeCompare(password, ADMIN_PASSWORD)) {
+    return res.type('html').send(renderAdminLogin({ error: 'Mot de passe incorrect.' }));
+  }
+  const token = jwt.sign({ admin: true }, SESSION_SECRET, { expiresIn: '12h' });
+  res.cookie(ADMIN_COOKIE, token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    maxAge: 12 * 60 * 60 * 1000
+  });
+  res.redirect('/admin');
+});
+
+app.post('/admin/logout', (req, res) => {
+  res.clearCookie(ADMIN_COOKIE);
+  res.redirect('/admin');
 });
 
 // ---------------------------------------------------------------------

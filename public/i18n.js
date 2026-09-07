@@ -95,15 +95,14 @@ window.I18N = {
     step3Title: 'Vous réservez ailleurs', step3Text: "Chaque élément s'ouvre sur le vrai site du partenaire pour finaliser au prix réel.",
 
     honestyHeading: "Ce que ce site fait vraiment — et ce qu'il ne fait pas encore",
-    honestyReal: "<strong>Réel :</strong> génération d'itinéraire, remodelage d'une formule et plan jour par jour passent par notre propre serveur, qui appelle Claude avec une clé API tenue côté serveur (jamais exposée au navigateur). Les photos viennent de Wikipedia via ce même serveur — une vraie base de photos géolocalisées, pas du mot-clé approximatif. La carte est une vraie carte Google Maps intégrée. Séjours sauvegardés et historique sont stockés dans une vraie base de données, rattachés à un identifiant généré dans votre navigateur.",
-    honestyAccount: "<strong>Compte :</strong> créer un compte (email + mot de passe) est optionnel — sans compte, vos séjours et votre historique restent liés à cet identifiant de navigateur, et vous les perdez si vous videz les données du navigateur ou changez d'appareil. Avec un compte, vos séjours déjà sauvegardés dans ce navigateur sont automatiquement rattachés à votre compte, et retrouvables en vous reconnectant depuis n'importe quel appareil. Les mots de passe sont hashés (jamais stockés en clair) ; il n'y a pas encore de récupération de mot de passe oublié ni de connexion via Google/autre.",
-    honestyShare: '<strong>Partage :</strong> le bouton "Partager" copie un récapitulatif texte ou ouvre le partage natif de votre appareil, et l\'export télécharge un fichier .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) demanderait de stocker l\'itinéraire à une adresse dédiée — pas encore construit.',
-    honestyEmail: '<strong>Email :</strong> le bouton "Recevoir cet itinéraire par email" envoie un vrai email (récapitulatif de la formule) à l\'adresse indiquée. Cette adresse est conservée pour pouvoir vous recontacter à ce sujet ; la case à cocher (décochée par défaut) est le seul cas où vous acceptez aussi de recevoir occasionnellement d\'autres idées de voyage — il n\'y a pas encore de newsletter automatique, ni de désinscription en un clic.',
-    honestyBuildMore: "<strong>À construire pour aller plus loin :</strong> réservation en un clic et suivi automatique des commissions, qui demandent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.",
+    honestyReal: "<strong>Réel :</strong> la génération, le remodelage d'une formule et le plan jour par jour passent par notre serveur, qui appelle Claude avec une clé API jamais exposée au navigateur. Les photos viennent de Wikipedia — une vraie base géolocalisée, pas un mot-clé approximatif — et la carte est une vraie carte Google Maps. Séjours et historique sont stockés en base de données, liés à un identifiant généré dans votre navigateur.",
+    honestyAccount: "<strong>Compte :</strong> optionnel. Sans compte, vos séjours restent liés à ce navigateur et se perdent si vous videz vos données ou changez d'appareil. Avec un compte, ils sont rattachés automatiquement et retrouvables depuis n'importe quel appareil. Mots de passe hashés ; pas encore de mot de passe oublié ni de connexion Google.",
+    honestyShare: '<strong>Partage :</strong> "Partager" copie un résumé texte ou ouvre le partage natif de l\'appareil ; l\'export télécharge un .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) n\'est pas encore construit.',
+    honestyEmail: '<strong>Email :</strong> le bouton envoie un vrai email avec le récapitulatif de la formule, PDF en pièce jointe. L\'adresse est conservée pour vous recontacter ; la case à cocher (décochée par défaut) autorise en plus d\'autres idées de voyage occasionnelles — pas encore de newsletter automatique ni de désinscription en un clic.',
+    honestyBuildMore: "<strong>À construire :</strong> réservation en un clic et suivi automatique des commissions — nécessitent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.",
 
     footNote: 'Peacetrip vise une commission d\'affiliation sur chaque réservation confirmée via nos liens partenaires — jamais répercutée sur votre prix.',
-    footContactBiz: 'Corentin Friedmann, entreprise individuelle',
-    footContactAddr: 'Mulhouse, France · SIRET : [à compléter après immatriculation]',
+    footCopyright: '© 2026 Peacetrip — Corentin Friedmann, entreprise individuelle · Mulhouse, France · SIRET : [à compléter après immatriculation]',
 
     authTabLogin: 'Connexion', authTabSignup: 'Créer un compte',
     authEmailLabel: 'Email', authPasswordLabel: 'Mot de passe',
@@ -228,15 +227,14 @@ window.I18N = {
     step3Title: 'You book elsewhere', step3Text: 'Each item opens the real partner site to finalize at the real price.',
 
     honestyHeading: "What this site actually does — and what it doesn't do yet",
-    honestyReal: "<strong>Real:</strong> itinerary generation, reshaping a tier, and the day-by-day plan all go through our own server, which calls Claude with a server-side API key (never exposed to the browser). Photos come from Wikipedia through that same server — a real geolocated photo database, not a rough keyword guess. The map is a real embedded Google Map. Saved trips and search history are stored in a real database, tied to an id generated in your browser.",
-    honestyAccount: "<strong>Account:</strong> creating an account (email + password) is optional — without one, your trips and history stay tied to this browser id, and you lose them if you clear your browser data or switch devices. With an account, trips already saved in this browser get automatically attached to it, and are reachable by logging in from any device. Passwords are hashed (never stored in plain text); there's no forgot-password recovery or Google/other login yet.",
-    honestyShare: '<strong>Sharing:</strong> the "Share" button copies a text summary or opens your device\'s native share sheet, and the export downloads a .txt file. A real shareable <em>link</em> (peacetrip.com/s/abc123) would need storing the itinerary at a dedicated address — not built yet.',
-    honestyEmail: '<strong>Email:</strong> the "Receive this itinerary by email" button sends a real email (tier summary) to the address given. That address is kept so we can follow up about it; the checkbox (unchecked by default) is the only case where you also agree to occasionally receive other trip ideas by email — there\'s no automatic newsletter yet, nor one-click unsubscribe.',
-    honestyBuildMore: "<strong>Still to build:</strong> one-click booking and automatic commission tracking, which need official affiliate agreements with Booking.com, GetYourGuide, Expedia or TheFork.",
+    honestyReal: "<strong>Real:</strong> generation, reshaping a tier, and the day-by-day plan all go through our server, which calls Claude with an API key never exposed to the browser. Photos come from Wikipedia — a real geolocated database, not a rough keyword guess — and the map is a real embedded Google Map. Trips and history are stored in a database, tied to an id generated in your browser.",
+    honestyAccount: "<strong>Account:</strong> optional. Without one, your trips stay tied to this browser and are lost if you clear your data or switch devices. With an account, they're attached automatically and reachable from any device. Passwords are hashed; no forgot-password recovery or Google login yet.",
+    honestyShare: '<strong>Sharing:</strong> "Share" copies a text summary or opens your device\'s native share sheet; the export downloads a .txt file. A real shareable <em>link</em> (peacetrip.com/s/abc123) isn\'t built yet.',
+    honestyEmail: '<strong>Email:</strong> the button sends a real email with the tier summary, PDF attached. The address is kept so we can follow up; the checkbox (unchecked by default) additionally allows occasional trip ideas by email — no automatic newsletter or one-click unsubscribe yet.',
+    honestyBuildMore: "<strong>Still to build:</strong> one-click booking and automatic commission tracking — both need official affiliate agreements with Booking.com, GetYourGuide, Expedia or TheFork.",
 
     footNote: "Peacetrip aims for an affiliate commission on every confirmed booking through our partner links — never added on top of your price.",
-    footContactBiz: 'Corentin Friedmann, sole proprietorship',
-    footContactAddr: 'Mulhouse, France · SIRET: [to be completed after registration]',
+    footCopyright: '© 2026 Peacetrip — Corentin Friedmann, sole proprietorship · Mulhouse, France · SIRET: [to be completed after registration]',
 
     authTabLogin: 'Log in', authTabSignup: 'Create account',
     authEmailLabel: 'Email', authPasswordLabel: 'Password',
