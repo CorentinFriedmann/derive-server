@@ -11,7 +11,7 @@
   --green-deep:#0B7D53;
   --green-soft:#DFF9EC;
   --blue:#2F8FEF;
-  --blue-deep:#1C74D1;
+  --blue-deep:#155DFC;
   --blue-soft:#E4F2FF;
   --ink:#0E2A3D;
   --on-accent:#FFFFFF;
@@ -112,7 +112,7 @@ textarea:focus{outline:none;}
 
 .go-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
 button.go{background:var(--blue-deep);color:var(--on-accent);border:none;padding:14px 26px;border-radius:10px;font-size:0.98rem;font-weight:600;cursor:pointer;transition:transform .15s, background .2s;font-family:var(--sans);}
-button.go:hover{background:#175FAD;transform:translateY(-1px);}
+button.go:hover{background:#124FD6;transform:translateY(-1px);}
 button.go:disabled{opacity:0.6;cursor:wait;transform:none;}
 .go-hint{font-family:var(--mono);font-size:0.76rem;color:var(--text-mute);}
 .error-msg{font-size:0.82rem;color:var(--blue-deep);width:100%;margin-top:4px;display:none;}
@@ -147,10 +147,12 @@ button.go:disabled{opacity:0.6;cursor:wait;transform:none;}
 
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
 @keyframes cardIn{from{opacity:0;transform:translateY(12px);}to{opacity:1;transform:translateY(0);}}
-.card{background:var(--bg);color:var(--text);border-radius:var(--radius);padding:22px 20px 20px;display:flex;flex-direction:column;border:1px solid var(--border);box-shadow:0 2px 14px rgba(14,42,61,0.05);animation:cardIn 0.4s ease-out backwards;transition:transform 0.2s ease, box-shadow 0.2s ease;}
-.card:hover{transform:translateY(-3px);box-shadow:0 12px 24px rgba(14,42,61,0.14);}
+.card{background:var(--bg);color:var(--text);border-radius:var(--radius);padding:22px 20px 20px;display:flex;flex-direction:column;border:1px solid var(--border);box-shadow:0 2px 14px rgba(14,42,61,0.05);animation:cardIn 0.45s cubic-bezier(0.16,1,0.3,1) backwards;transition:transform 0.2s ease, box-shadow 0.2s ease;}
+.card:hover{transform:translateY(-4px);box-shadow:0 16px 32px rgba(14,42,61,0.14);}
+.tier-body{transition:opacity 0.15s ease;}
+.tier-body.fading{opacity:0;}
 .card-photo{
-  margin:-26px -24px 18px;width:calc(100% + 48px);height:150px;position:relative;overflow:hidden;
+  margin:-22px -20px 18px;width:calc(100% + 40px);height:150px;position:relative;overflow:hidden;
   border-radius:var(--radius) var(--radius) 0 0;background:linear-gradient(135deg,#BFE6F8,#CFF3E3);
 }
 .card-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block;}

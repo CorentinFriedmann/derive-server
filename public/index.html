@@ -26,9 +26,9 @@
 <div class="hero wrap">
   <div class="hero-grid">
     <div>
-      <div class="eyebrow" data-i18n="heroEyebrow">Séjours composés à la demande — par IA</div>
+      <div class="eyebrow" data-i18n="heroEyebrow">Séjours composés sur mesure</div>
       <h1 id="heroH1">Décrivez le voyage <em>que vous n'avez pas</em><br>encore trouvé les mots pour chercher.</h1>
-      <p class="lede" data-i18n="heroLede">Un mood, un budget, une ambiance — une phrase suffit. Peacetrip interroge Claude pour composer l'itinéraire, détaille chaque jour, et vous envoie réserver sur les vrais sites partenaires.</p>
+      <p class="lede" data-i18n="heroLede">Un mood, un budget, une ambiance — une phrase suffit. Peacetrip compose l'itinéraire, détaille chaque jour, et vous envoie réserver sur les vrais sites partenaires.</p>
     </div>
     <div class="chart" aria-hidden="true">
       <svg viewBox="0 0 400 400">
@@ -131,7 +131,7 @@
   <h2 data-i18n="howHeading">De la phrase à la valise, en trois temps.</h2>
   <div class="waypoints">
     <div class="wp"><div class="wp-marker">01</div><h4 data-i18n="step1Title">Vous décrivez</h4><p data-i18n="step1Text">Style, ambiance, budget, voyageurs et nuits — ajustables librement.</p></div>
-    <div class="wp"><div class="wp-marker">02</div><h4 data-i18n="step2Title">Claude compose</h4><p data-i18n="step2Text">Destination, hôtel, activités, tables — puis un déroulé jour par jour à la demande.</p></div>
+    <div class="wp"><div class="wp-marker">02</div><h4 data-i18n="step2Title">On compose</h4><p data-i18n="step2Text">Destination, hôtel, activités, tables — puis un déroulé jour par jour à la demande.</p></div>
     <div class="wp"><div class="wp-marker">03</div><h4 data-i18n="step3Title">Vous réservez ailleurs</h4><p data-i18n="step3Text">Chaque élément s'ouvre sur le vrai site du partenaire pour finaliser au prix réel.</p></div>
   </div>
 </div>
@@ -139,7 +139,7 @@
 <div class="wrap honesty" id="honesty">
   <div class="honesty-box">
     <h4 data-i18n="honestyHeading">Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
-    <p data-i18n-html="honestyReal"><strong>Réel :</strong> la génération, le remodelage d'une formule et le plan jour par jour passent par notre serveur, qui appelle Claude avec une clé API jamais exposée au navigateur. Les photos viennent de Wikipedia — une vraie base géolocalisée, pas un mot-clé approximatif — et la carte est une vraie carte Google Maps. Séjours et historique sont stockés en base de données, liés à un identifiant généré dans votre navigateur.</p>
+    <p data-i18n-html="honestyReal"><strong>Réel :</strong> la génération, le remodelage d'une formule et le plan jour par jour passent par notre serveur, qui appelle notre moteur de génération avec une clé API jamais exposée au navigateur. Les photos viennent de Wikipedia — une vraie base géolocalisée, pas un mot-clé approximatif — et la carte est une vraie carte Google Maps. Séjours et historique sont stockés en base de données, liés à un identifiant généré dans votre navigateur.</p>
     <p data-i18n-html="honestyAccount"><strong>Compte :</strong> optionnel. Sans compte, vos séjours restent liés à ce navigateur et se perdent si vous videz vos données ou changez d'appareil. Avec un compte, ils sont rattachés automatiquement et retrouvables depuis n'importe quel appareil. Mots de passe hashés ; pas encore de mot de passe oublié ni de connexion Google.</p>
     <p data-i18n-html="honestyShare"><strong>Partage :</strong> "Partager" copie un résumé texte ou ouvre le partage natif de l'appareil ; l'export télécharge un .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) n'est pas encore construit.</p>
     <p data-i18n-html="honestyEmail"><strong>Email :</strong> le bouton envoie un vrai email avec le récapitulatif de la formule, PDF en pièce jointe. L'adresse est conservée pour vous recontacter ; la case à cocher (décochée par défaut) autorise en plus d'autres idées de voyage occasionnelles — pas encore de newsletter automatique ni de désinscription en un clic.</p>
@@ -190,7 +190,7 @@
     <div class="detail-body">
       <div class="detail-days">
         <div class="day-tabs" id="dayTabs"></div>
-        <div id="dayPanels"><div class="day-loading" data-i18n="dayComposing">Claude compose le déroulé jour par jour…</div></div>
+        <div id="dayPanels"><div class="day-loading" data-i18n="dayComposing">Composition du déroulé jour par jour…</div></div>
       </div>
       <aside class="detail-side">
         <div class="detail-price" id="detailPrice"></div>
@@ -722,7 +722,12 @@
     cardEl.dataset.tier = tier.key;
     cardEl.querySelectorAll('.tt-btn').forEach(function(b){ b.classList.toggle('active', b.dataset.tt === tier.key); });
     const destination = dest.destination + (dest.country ? ", " + dest.country : "");
-    cardEl.querySelector('.tier-body').innerHTML = renderTierBody(dest, tier, destination);
+    const tierBodyEl = cardEl.querySelector('.tier-body');
+    tierBodyEl.classList.add('fading');
+    setTimeout(function(){
+      tierBodyEl.innerHTML = renderTierBody(dest, tier, destination);
+      tierBodyEl.classList.remove('fading');
+    }, 150);
     if(compareWrap.classList.contains('show')) renderCompareTable();
   }
 
