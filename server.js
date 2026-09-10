@@ -14,6 +14,7 @@ const rateLimit = require('express-rate-limit');
 const db = require('./db');
 const { askClaude, parseJsonLenient } = require('./lib/claude');
 const { renderDestinationPage } = require('./lib/destinationPage');
+const { renderSharedTripPage, renderNotFound } = require('./lib/sharePage');
 const { sendEmail } = require('./lib/resend');
 const { buildItineraryPdf } = require('./lib/itineraryPdf');
 const { renderAdminLogin, renderAdminDashboard } = require('./lib/adminPage');
@@ -737,6 +738,33 @@ app.post('/admin/login', adminLoginLimiter, (req, res) => {
 app.post('/admin/logout', (req, res) => {
   res.clearCookie(ADMIN_COOKIE);
   res.redirect('/admin');
+});
+
+// ---------------------------------------------------------------------
+// /api/share + /s/:id — a real, permanent shareable link for one itinerary
+// snapshot (server-rendered, no client JS — see lib/sharePage.js). Closes
+// the gap the honesty box used to flag: "Partager" only copied text before.
+// ---------------------------------------------------------------------
+
+app.post('/api/share', generalLimiter, (req, res) => {
+  try {
+    const { destination, country, tier, nights, travelers, days, lang } = req.body || {};
+    if (!destination || !tier || !tier.hotel) return res.status(400).json({ error: 'Itinéraire incomplet.' });
+    const id = db.createSharedTrip({ destination, country, tier, nights: nights || 0, travelers: travelers || 1, days: days || [], lang });
+    const baseUrl = req.protocol + '://' + req.get('host');
+    res.json({ id, url: baseUrl + '/s/' + id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Lien de partage indisponible pour le moment.' });
+  }
+});
+
+app.get('/s/:id', generalLimiter, (req, res) => {
+  const trip = db.getSharedTrip(req.params.id);
+  const lang = (req.query.lang === 'en') ? 'en' : 'fr';
+  if (!trip) return res.status(404).type('html').send(renderNotFound(lang));
+  const baseUrl = req.protocol + '://' + req.get('host');
+  res.type('html').send(renderSharedTripPage(trip, baseUrl, req.params.id));
 });
 
 // ---------------------------------------------------------------------

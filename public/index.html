@@ -16,8 +16,8 @@
   <div class="logo"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M58 6 C 46 10 36 16 30 22 C 26 18 18 14 8 12 C 16 18 22 22 26 26 C 20 27 12 26 4 22 C 12 30 22 34 30 32 C 24 36 16 38 6 36 C 18 40 32 40 42 32 C 50 26 56 16 58 6 Z"/></svg>Peacetrip</div>
   <div class="nav-links">
     <a href="#panel" data-i18n="navComposer">Composer</a>
-    <a href="#saved" data-i18n="navSaved">Mes voyages</a> <span class="nav-badge" id="savedCount">0</span>
     <a href="#how" data-i18n="navHow">Comment ça marche</a>
+    <a href="#saved" data-i18n="navSaved">Mes voyages</a> <span class="nav-badge" id="savedCount">0</span>
     <button class="nav-auth" id="langToggleBtn" type="button" data-i18n-aria="langToggleAria">EN</button>
     <span id="navAuthSlot"><button class="nav-auth" id="navAuthBtn" type="button" data-i18n="navLogin">Se connecter</button></span>
   </div>
@@ -121,13 +121,8 @@
   </div>
 </div>
 
-<div class="wrap saved-section" id="saved">
-  <h2 data-i18n="savedHeading">Mes voyages sauvegardés</h2>
-  <p class="sub" data-i18n="savedSub">Enregistrés dans ce navigateur — cliquez l'étoile sur une formule pour la garder ici.</p>
-  <div id="savedList"><div class="saved-empty" data-i18n="savedEmpty">Aucun séjour sauvegardé pour l’instant.</div></div>
-</div>
-
 <div class="wrap how" id="how">
+  <div class="eyebrow" data-i18n="howEyebrow">Comment ça marche</div>
   <h2 data-i18n="howHeading">De la phrase à la valise, en trois temps.</h2>
   <div class="waypoints">
     <div class="wp"><div class="wp-marker">01</div><h4 data-i18n="step1Title">Vous décrivez</h4><p data-i18n="step1Text">Style, ambiance, budget, voyageurs et nuits — ajustables librement.</p></div>
@@ -138,13 +133,21 @@
 
 <div class="wrap honesty" id="honesty">
   <div class="honesty-box">
+    <div class="eyebrow" data-i18n="honestyEyebrow">Transparence</div>
     <h4 data-i18n="honestyHeading">Ce que ce site fait vraiment — et ce qu'il ne fait pas encore</h4>
     <p data-i18n-html="honestyReal"><strong>Réel :</strong> la génération, le remodelage d'une formule et le plan jour par jour passent par notre serveur, qui appelle notre moteur de génération avec une clé API jamais exposée au navigateur. Les photos viennent de Wikipedia — une vraie base géolocalisée, pas un mot-clé approximatif — et la carte est une vraie carte Google Maps. Séjours et historique sont stockés en base de données, liés à un identifiant généré dans votre navigateur.</p>
     <p data-i18n-html="honestyAccount"><strong>Compte :</strong> optionnel. Sans compte, vos séjours restent liés à ce navigateur et se perdent si vous videz vos données ou changez d'appareil. Avec un compte, ils sont rattachés automatiquement et retrouvables depuis n'importe quel appareil. Mots de passe hashés ; pas encore de mot de passe oublié ni de connexion Google.</p>
-    <p data-i18n-html="honestyShare"><strong>Partage :</strong> "Partager" copie un résumé texte ou ouvre le partage natif de l'appareil ; l'export télécharge un .txt. Un vrai <em>lien</em> de partage (peacetrip.com/s/abc123) n'est pas encore construit.</p>
+    <p data-i18n-html="honestyShare"><strong>Partage :</strong> "Partager" génère un vrai <em>lien</em> (peacetrip.com/s/...) vers une page dédiée à cet itinéraire, et l'ouvre dans le partage natif de l'appareil ou le copie dans le presse-papiers. L'export télécharge en plus un fichier .txt.</p>
     <p data-i18n-html="honestyEmail"><strong>Email :</strong> le bouton envoie un vrai email avec le récapitulatif de la formule, PDF en pièce jointe. L'adresse est conservée pour vous recontacter ; la case à cocher (décochée par défaut) autorise en plus d'autres idées de voyage occasionnelles — pas encore de newsletter automatique ni de désinscription en un clic.</p>
     <p data-i18n-html="honestyBuildMore"><strong>À construire :</strong> réservation en un clic et suivi automatique des commissions — nécessitent des accords d'affiliation officiels avec Booking.com, GetYourGuide, Expedia ou TheFork.</p>
   </div>
+</div>
+
+<div class="wrap saved-section" id="saved">
+  <div class="eyebrow" data-i18n="savedEyebrow">Vos séjours</div>
+  <h2 data-i18n="savedHeading">Mes voyages sauvegardés</h2>
+  <p class="sub" data-i18n="savedSub">Enregistrés dans ce navigateur — cliquez l'étoile sur une formule pour la garder ici.</p>
+  <div id="savedList"><div class="saved-empty" data-i18n="savedEmpty">Aucun séjour sauvegardé pour l’instant.</div></div>
 </div>
 
 <footer class="wrap footer-clean">
@@ -1024,6 +1027,7 @@
   const detailPanel = document.querySelector('.detail-panel');
   let currentTier = null, currentDestinationFull = '', currentDestination = '', currentCountry = '';
   let currentDayPlan = null;
+  let currentShareUrl = null;
   let detailOpener = null;
   let releaseDetailTrap = null;
 
@@ -1051,6 +1055,7 @@
     currentCountry = dest.country || '';
     currentDestinationFull = dest.destination + (dest.country ? ", " + dest.country : "");
     currentDayPlan = null;
+    currentShareUrl = null;
 
     document.getElementById('detailTierLabel').textContent = tier.label;
     document.getElementById('detailTitle').textContent = dest.destination;
@@ -1153,20 +1158,45 @@
       t('shareFooterLine', { url: bookingUrl(currentDestinationFull) });
   }
 
-  document.getElementById('detailShareBtn').addEventListener('click', async function(){
-    const text = buildShareText();
-    if(!text) return;
-    if(navigator.share){
-      try{ await navigator.share({ title: t('shareTitlePrefix') + ' ' + currentDestinationFull, text: text }); return; }
-      catch(_e){ /* annulé ou non supporté, on retombe sur le presse-papiers */ }
-    }
+  const detailShareBtn = document.getElementById('detailShareBtn');
+  detailShareBtn.addEventListener('click', async function(){
+    if(!currentTier) return;
+    const originalLabel = detailShareBtn.textContent;
+    detailShareBtn.disabled = true;
+    detailShareBtn.textContent = '…';
     try{
-      await navigator.clipboard.writeText(text);
-      shareConfirm.textContent = t('shareCopied');
-    }catch(_e){
-      shareConfirm.textContent = t('shareCopyFailed');
+      if(!currentShareUrl){
+        const shared = await callBackend('/share', {
+          destination: currentDestination, country: currentCountry, tier: currentTier,
+          nights: currentNights, travelers: currentTravelers, days: currentDayPlan,
+          lang: window.getLang()
+        });
+        currentShareUrl = shared.url;
+      }
+      const summary = currentDestinationFull + ' — ' + currentTier.label;
+      let clearDelay = 4000;
+      if(navigator.share){
+        try{ await navigator.share({ title: t('shareTitlePrefix') + ' ' + currentDestinationFull, text: summary, url: currentShareUrl }); return; }
+        catch(_e){ /* annulé ou non supporté, on retombe sur le presse-papiers */ }
+      }
+      try{
+        await navigator.clipboard.writeText(currentShareUrl);
+        shareConfirm.textContent = t('shareCopied');
+      }catch(_e){
+        // Pas de clipboard dispo (contexte non sécurisé, permission refusée…) —
+        // on affiche le lien en clair pour une copie manuelle, plus longtemps.
+        shareConfirm.innerHTML = t('shareCopyFailed') + ' <a href="' + currentShareUrl + '">' + currentShareUrl + '</a>';
+        clearDelay = 20000;
+      }
+      setTimeout(function(){ shareConfirm.innerHTML = ''; }, clearDelay);
+      return;
+    }catch(err){
+      shareConfirm.textContent = t('shareLinkError');
+      setTimeout(function(){ shareConfirm.textContent = ''; }, 4000);
+    }finally{
+      detailShareBtn.disabled = false;
+      detailShareBtn.textContent = originalLabel;
     }
-    setTimeout(function(){ shareConfirm.textContent = ''; }, 4000);
   });
 
   document.getElementById('detailExportBtn').addEventListener('click', function(){

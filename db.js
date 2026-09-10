@@ -8,6 +8,7 @@
 
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const Database = require('better-sqlite3');
 
 const dataDir = path.join(__dirname, 'data');
@@ -65,6 +66,12 @@ db.exec(`
     expires_at  INTEGER NOT NULL
   );
   CREATE INDEX IF NOT EXISTS idx_generation_cache_expires ON generation_cache(expires_at);
+
+  CREATE TABLE IF NOT EXISTS shared_trips (
+    id          TEXT PRIMARY KEY,
+    payload     TEXT NOT NULL,
+    created_at  INTEGER NOT NULL
+  );
 `);
 
 // --- Soft migration: add user_id to trips/history without touching
@@ -216,6 +223,23 @@ function setCachedGeneration(cacheKey, payload, ttlMs) {
   ).run(cacheKey, JSON.stringify(payload), now, now + ttlMs);
 }
 
+// --- Shared trips ---------------------------------------------------------
+// A real, permanent link for one itinerary snapshot (peacetrip.com/s/abc123)
+// — no owner/session tracking needed, it's public by design once shared.
+
+function createSharedTrip(payload) {
+  let id;
+  do { id = crypto.randomBytes(4).toString('hex'); } while (db.prepare('SELECT 1 FROM shared_trips WHERE id = ?').get(id));
+  db.prepare('INSERT INTO shared_trips (id, payload, created_at) VALUES (?, ?, ?)').run(id, JSON.stringify(payload), Date.now());
+  return id;
+}
+
+function getSharedTrip(id) {
+  const row = db.prepare('SELECT payload FROM shared_trips WHERE id = ?').get(id);
+  if (!row) return null;
+  try { return JSON.parse(row.payload); } catch (_e) { return null; }
+}
+
 // --- Admin dashboard ----------------------------------------------------
 // One aggregate query bundle for /admin — read-only, no pagination since
 // this is an internal glance-at-it tool, not a paginated report.
@@ -240,5 +264,6 @@ module.exports = {
   listTrips, insertTrip, deleteTrip, listHistory, insertHistory,
   createUser, findUserByEmail, migrateGuestData,
   insertEmailCapture, getCachedGeneration, setCachedGeneration,
+  createSharedTrip, getSharedTrip,
   getAdminStats
 };
